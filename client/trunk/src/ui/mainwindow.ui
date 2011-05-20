@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>634</width>
+    <height>496</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Tyranny Client</string>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>634</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionConnect"/>
+    <addaction name="actionDisconnect"/>
+    <addaction name="separator"/>
+    <addaction name="actionPreferences"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionReport_Error"/>
+    <addaction name="actionContents"/>
+    <addaction name="actionAbout"/>
+   </widget>
+   <widget class="QMenu" name="menuGame">
+    <property name="title">
+     <string>Game</string>
+    </property>
+    <addaction name="actionCreate_Room"/>
+    <addaction name="separator"/>
+    <addaction name="actionManage_Friends"/>
+    <addaction name="actionBlocked_Users"/>
+   </widget>
+   <widget class="QMenu" name="menuAccount">
+    <property name="title">
+     <string>Account</string>
+    </property>
+    <addaction name="actionEdit_Profile"/>
+    <addaction name="actionStatistics"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettings"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuGame"/>
+   <addaction name="menuAccount"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionReport_Error">
+   <property name="text">
+    <string>Report Error</string>
+   </property>
+   <property name="statusTip">
+    <string>Report a bug or problem you experienced with the game.</string>
+   </property>
+  </action>
+  <action name="actionConnect">
+   <property name="text">
+    <string>Connect</string>
+   </property>
+   <property name="statusTip">
+    <string>Connect to the server defined in the Preferences dialog.</string>
+   </property>
+  </action>
+  <action name="actionDisconnect">
+   <property name="text">
+    <string>Disconnect</string>
+   </property>
+   <property name="statusTip">
+    <string>Terminate the current connection with the server.</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+   <property name="statusTip">
+    <string>Set which server to connect to, etc.</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="statusTip">
+    <string>Terminate the client.</string>
+   </property>
+  </action>
+  <action name="actionCreate_Room">
+   <property name="text">
+    <string>Create Room</string>
+   </property>
+   <property name="statusTip">
+    <string>Open a new game room to play a round.</string>
+   </property>
+  </action>
+  <action name="actionManage_Friends">
+   <property name="text">
+    <string>Manage Friends</string>
+   </property>
+   <property name="statusTip">
+    <string>Set which users you consider friends.</string>
+   </property>
+  </action>
+  <action name="actionBlocked_Users">
+   <property name="text">
+    <string>Blocked Users</string>
+   </property>
+   <property name="statusTip">
+    <string>Modify which users should not communicate with you.</string>
+   </property>
+  </action>
+  <action name="actionEdit_Profile">
+   <property name="text">
+    <string>Edit Profile</string>
+   </property>
+   <property name="statusTip">
+    <string>Modify your public information.</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+   <property name="statusTip">
+    <string>Change your password, and more.</string>
+   </property>
+  </action>
+  <action name="actionStatistics">
+   <property name="text">
+    <string>Statistics</string>
+   </property>
+   <property name="statusTip">
+    <string>View your wins, losses, and other statistics.</string>
+   </property>
+  </action>
+  <action name="actionContents">
+   <property name="text">
+    <string>Contents</string>
+   </property>
+   <property name="statusTip">
+    <string>Display a list of topics about the client.</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+   <property name="statusTip">
+    <string>Information about the client.</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
