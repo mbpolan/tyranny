@@ -53,20 +53,14 @@ void ServerSocket::listen() throw(ServerSocket::Exception) {
 	if (::listen(m_Socket, 10)<0)
 		throw ServerSocket::Exception("Unable to listen on socket.");
 }
-		
-void ServerSocket::acceptLoop(void* (*cb)(void*)) {
-	while(1) {
-		struct sockaddr_in cl;
-		socklen_t len=sizeof(cl);
-		int s=accept(m_Socket, (struct sockaddr*) &cl, &len);
-		
-		// someone connected to this socket!
-		if (s>0) {
-			Client *client=new Client(inet_ntoa(cl.sin_addr), ntohs(cl.sin_port), s);
-			
-			// fire the callback
-			(*cb)((void*) client);
-		}
-	}
-}
 
+ServerSocket::Client* ServerSocket::accept() {
+	struct sockaddr_in cl;
+	socklen_t len=sizeof(cl);
+	int s=::accept(m_Socket, (struct sockaddr*) &cl, &len);
+
+	if (s>0)
+		return new Client(inet_ntoa(cl.sin_addr), ntohs(cl.sin_port), s);
+	else
+		return NULL;
+}
