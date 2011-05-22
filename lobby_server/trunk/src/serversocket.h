@@ -45,7 +45,7 @@ class ServerSocket {
 				 * Returns the reason for this exception.
 				 * @return Message string
 				 */
-				std::string message() const { return m_Message; }
+				std::string getMessage() const { return m_Message; }
 			private:
 				/// The message for this exception.
 				std::string m_Message;
@@ -114,10 +114,10 @@ class ServerSocket {
 		void listen() throw(ServerSocket::Exception);
 		
 		/**
-		 * Waits for connections and fires a callback if one is pending.
-		 * @param cb The function to call if a client connection is waiting.
+		 * Waits for connections and returns client data upon success.
+		 * @return Data about an incoming client connection.
 		 */
-		void acceptLoop(void* (*cb)(void*));
+		ServerSocket::Client* accept();
 	
 	private:
 		/// The IP address to bind this socket to.
