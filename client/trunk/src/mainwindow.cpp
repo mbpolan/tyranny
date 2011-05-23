@@ -19,15 +19,48 @@
  ***************************************************************************/
 // mainwindow.cpp: implementation of the MainWindow class
 
+#include "iohandler.h"
 #include "mainwindow.h"
+#include "prefdialog.h"
 
 #include "ui/ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	ui=new Ui::MainWindow;
 	ui->setupUi(this);
+
+	// connect signals
+	connect(ui->actionPreferences, SIGNAL(triggered()), this, SLOT(onPreferences()));
+
+	// try to load the preferences file
+	QString ip;
+	int port;
+	QVector<QPair<QString, int> > servers;
+
+	IOHandler io("client.dat");
+	if (io.loadPreferences(&ip, &port, &servers))
+	    m_PrefData=new PrefDialog::Data(ip, port, servers);
+	else
+	    m_PrefData=NULL;
 }
 
 MainWindow::~MainWindow() {
+	if (m_PrefData)
+		delete m_PrefData;
+}
 
+void MainWindow::onPreferences() {
+	PrefDialog pd(m_PrefData, this);
+	if (pd.exec()) {
+		// we don't need the old data anymore
+		if (m_PrefData)
+		    delete m_PrefData;
+
+		// update preferences data
+		m_PrefData=pd.getPreferencesData();
+
+		// save the new preferences data to file
+		IOHandler io("client.dat");
+		io.savePreferences(m_PrefData->getIP(), m_PrefData->getPort(), m_PrefData->getServers());
+	}
 }
