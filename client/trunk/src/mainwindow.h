@@ -24,11 +24,13 @@
 
 #include <QtGui/QMainWindow>
 
+#include "prefdialog.h"
+
 namespace Ui {
 	class MainWindow;
 }
 
-/*
+/**
  * A class that serves as the controller for the client's main window.
  * This class abstracts the interface for the window that provides the user with
  * a way to interact with the client when he or she is in the lobby. It is responsible
@@ -42,21 +44,27 @@ class MainWindow: public QMainWindow {
 	Q_OBJECT
 
 	public:
-		/*
+		/**
 		 * Default constructor for the MainWindow class.
 		 * The parent parameter should always be left as NULL since it is illogical for
 		 * this window to have a parent.
 		 */
 		MainWindow(QWidget *parent=NULL);
 
-		/*
+		/**
 		 * Default destructor for the MainWindow class.
 		 */
 		~MainWindow();
 
+	private slots:
+		void onPreferences();
+
 	private:
 		/// Pointer to the user interface object for this class.
 		Ui::MainWindow *ui;
+
+		/// Cached preferences data.
+		PrefDialog::Data *m_PrefData;
 };
 
 #endif
