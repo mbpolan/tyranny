@@ -25,6 +25,7 @@
 
 #include "configfile.h"
 #include "lobbyserver.h"
+#include "protocol.h"
 #include "serversocket.h"
 
 // globals
