@@ -16,5 +16,6 @@ noinst_HEADERS = \
 	lobbyserver.h \
 	packet.h \
 	protocol.h \
+	protspec.h \
 	serversocket.h
 
