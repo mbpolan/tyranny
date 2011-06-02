@@ -17,40 +17,45 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// prefdialog.cpp: implementation of the PrefDialog class.
+// authdialog.h: definition of the AuthDialog class.
 
-#include "prefdialog.h"
+#ifndef AUTHDIALOG_H
+#define AUTHDIALOG_H
 
-#include "ui/ui_prefdialog.h"
+#include <QDialog>
 
-PrefDialog::PrefDialog(PrefDialog::Data *data, QWidget *parent): QDialog(parent) {
-	ui=new Ui::PrefDialog;
-	ui->setupUi(this);
-
-	// if a data pointer was passed, synthesize the values
-	if (data) {
-		ui->ipEdit->setText(data->getIP());
-		ui->portEdit->setValue(data->getPort());
-
-		QVector<QPair<QString, int> > list=data->getServers();
-		for (int i=0; i<list.size(); i++) {
-			QTreeWidgetItem *item=new QTreeWidgetItem(ui->serverList);
-			item->setText(0, list[i].first);
-			item->setText(1, QString("%1").arg(list[i].second));
-		}
-    	}
+namespace Ui {
+	class AuthDialog;
 }
 
-PrefDialog::Data* PrefDialog::getPreferencesData() const {
-	QVector<QPair<QString, int> > list;
+/**
+ * Dialog presented to the user for authentication.
+ * This dialog allows the user to provide a username and a password, which can then
+ * be used for various purposes.
+ *
+ * The UI file for this class is named authdialog.ui.
+ */
+class AuthDialog: public QDialog {
+	Q_OBJECT
 
-	// iterate over the saved servers
-	for (int i=0; i<ui->serverList->topLevelItemCount(); i++) {
-		QString ip=ui->serverList->topLevelItem(i)->text(0);
-		int port=ui->serverList->topLevelItem(i)->text(1).toInt();
+	public:
+		/// Default constructor
+		AuthDialog(QWidget *parent=NULL);
 
-		list.push_back(QPair<QString, int>(ip, port));
-	}
+		/**
+		 * Returns the inputted username.
+		 * @return The provided username.
+		 */
+		QString getUsername() const;
 
-	return new PrefDialog::Data(ui->ipEdit->text(), ui->portEdit->value(), list);
-}
+		/**
+		 * Returns the inputted password.
+		 * @return The provided password.
+		 */
+		QString getPassword() const;
+
+	private:
+		Ui::AuthDialog *ui;
+};
+
+#endif

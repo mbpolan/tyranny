@@ -17,40 +17,16 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// prefdialog.cpp: implementation of the PrefDialog class.
+// protspec.h: definition of the client-server protocol.
 
-#include "prefdialog.h"
+#ifndef PROTSPEC_H
+#define PROTSPEC_H
 
-#include "ui/ui_prefdialog.h"
+/// Authentication class packets
+#define AUTH_DATA			0xA0
+#define AUTH_SUCCESS		0xA1
+#define AUTH_ERROR		0xA2
+#define AUTH_LOGOUT		0xA3
+#define AUTH_REQUEST		0xA4
 
-PrefDialog::PrefDialog(PrefDialog::Data *data, QWidget *parent): QDialog(parent) {
-	ui=new Ui::PrefDialog;
-	ui->setupUi(this);
-
-	// if a data pointer was passed, synthesize the values
-	if (data) {
-		ui->ipEdit->setText(data->getIP());
-		ui->portEdit->setValue(data->getPort());
-
-		QVector<QPair<QString, int> > list=data->getServers();
-		for (int i=0; i<list.size(); i++) {
-			QTreeWidgetItem *item=new QTreeWidgetItem(ui->serverList);
-			item->setText(0, list[i].first);
-			item->setText(1, QString("%1").arg(list[i].second));
-		}
-    	}
-}
-
-PrefDialog::Data* PrefDialog::getPreferencesData() const {
-	QVector<QPair<QString, int> > list;
-
-	// iterate over the saved servers
-	for (int i=0; i<ui->serverList->topLevelItemCount(); i++) {
-		QString ip=ui->serverList->topLevelItem(i)->text(0);
-		int port=ui->serverList->topLevelItem(i)->text(1).toInt();
-
-		list.push_back(QPair<QString, int>(ip, port));
-	}
-
-	return new PrefDialog::Data(ui->ipEdit->text(), ui->portEdit->value(), list);
-}
+#endif // PROTSPEC_H
