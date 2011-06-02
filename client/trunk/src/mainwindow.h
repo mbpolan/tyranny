@@ -25,6 +25,7 @@
 #include <QtGui/QMainWindow>
 
 #include "prefdialog.h"
+#include "netmanager.h"
 
 namespace Ui {
 	class MainWindow;
@@ -57,14 +58,52 @@ class MainWindow: public QMainWindow {
 		~MainWindow();
 
 	private slots:
+		/// Handler for File -> Connect action.
+		void onConnect();
+
+		/// Handler for File -> Disconnect action.
+		void onDisconnect();
+
+		/// Handler for File -> Preferences action.
 		void onPreferences();
 
+		/// Handler for File -> Quit action.
+		void onQuit();
+
+		/// Network handler for an established connection.
+		void onNetConnected();
+
+		/// Network handler for disconnected state.
+		void onNetDisconnected();
+
+		/// Network handler for authentication request.
+		void onNetAuthenticate();
+
+		/// Network handler for socket errors.
+		void onNetError(const QString &error);
+
+		/// Network handler for critical errors.
+		void onNetCriticalError(const QString &error);
+
+		/// Network handler for general messages.
+		void onNetMessage(const QString &msg);
+
 	private:
+		/**
+		 * Enables or disables parts of the interface based on connectivity.
+		 *
+		 * @param connected True if the client is connected and authenticated, false otherwise.
+		 */
+		void toggleUi(bool connected);
+
 		/// Pointer to the user interface object for this class.
 		Ui::MainWindow *ui;
 
 		/// Cached preferences data.
 		PrefDialog::Data *m_PrefData;
+
+		/// Network manager object.
+		NetManager *m_Network;
 };
 
 #endif
