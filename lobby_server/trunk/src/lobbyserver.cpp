@@ -25,6 +25,8 @@
 
 #include "configfile.h"
 #include "lobbyserver.h"
+#include "packet.h"
+#include "protspec.h"
 #include "protocol.h"
 #include "serversocket.h"
 
@@ -33,14 +35,51 @@ ConfigFile *g_ConfigFile;
 
 void* connectionHandler(void *arg) {
 	ServerSocket::Client *data=(ServerSocket::Client*) arg;
+	int socket=data->getSocket();
 	
 	std::cout << "Accepted connection from " << data->getIP() << ":" << data->getPort() << std::endl;
 	
-	// temporary placeholder for testing connections
+	// send the client an authentication request
+	Packet p, rp;
+	p.addByte(AUTH_REQUEST);
+	p.write(socket);
+
+	// wait for a response
+	rp.read(socket);
+
+	// verify the packet
+	if (rp.byte()==AUTH_DATA) {
+		Packet p2;
+		std::string username=rp.string();
+		std::string password=rp.string();
+
+		// dummy values for authentication testing
+		if (username=="user" && password=="test") {
+			p2.addByte(AUTH_SUCCESS);
+			p2.write(socket);
+		}
+
+		// test authentication failures
+		else {
+			p2.addByte(AUTH_ERROR);
+			p2.addString("Incorrect username or password.");
+			p2.write(socket);
+		}
+	}
+
+	// otherwise alert the client
+	else {
+		Packet p2;
+		p2.addByte(AUTH_ERROR);
+		p2.addString("Unexpected response packet.");
+		p2.write(socket);
+	}
+
 	sleep(5);
-	close(data->getSocket());
+
+	close(socket);
 	
-	std::cout << "Disconnected client on socket " << data->getSocket() << std::endl;
+	std::cout << "Disconnected client on socket " << socket << std::endl;
 	
 	delete data;
 	pthread_exit(0);

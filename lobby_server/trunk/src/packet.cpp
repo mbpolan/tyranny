@@ -105,7 +105,7 @@ bool Packet::write(int fd) {
 	// save the packet size to buffer
 	m_Buffer[0]=m_Size;
 	m_Buffer[1]=(m_Size >> 8);
-	
+
 	int sent=0, remaining=m_Size+2;
 	int n;
 	while(sent<m_Size) {
