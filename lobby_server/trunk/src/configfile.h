@@ -131,12 +131,48 @@ class ConfigFile {
 		 */
 		std::vector<ConfigFile::Server> getGameServerList() const { return m_GameServers; }
 
+		/**
+		 * Returns the database server hostname.
+		 * @return The DBMS server hostname or IP address.
+		 */
+		std::string getDBHost() const { return m_DBHost; }
+
+		/**
+		 * Returns the database port number.
+		 * @return The DBMS server port number.
+		 */
+		int getDBPort() const { return m_DBPort; }
+
+		/**
+		 * Returns the database name.
+		 * @return The DBMS server data store name.
+		 */
+		std::string getDBName() const { return m_DBName; }
+
+		/**
+		 * Returns the database username.
+		 * @return The DBMS server access username.
+		 */
+		std::string getDBUser() const { return m_DBUser; }
+
+		/**
+		 * Returns the database password.
+		 * @return The DBMS server user password.
+		 */
+		std::string getDBPassword() const { return m_DBPassword; }
+
 	private:
 		/**
 		 * Parses the list of associated game servers.
 		 * @param node The root node of the <servers> ... </servers> elements
 		 */
 		void parseServerList(void *node) throw(ConfigFile::Exception);
+
+		/**
+		 * Parses the section containing MySQL connection information.
+		 * @param node The root node of the <mysql> ... </mysql> elements
+		 */
+		void parseMySQLSection(void *node) throw(ConfigFile::Exception);
 
 		/// The path of the configuration file to load.
 		std::string m_Path;
@@ -152,6 +188,21 @@ class ConfigFile {
 
 		/// List of associated game servers.
 		std::vector<ConfigFile::Server> m_GameServers;
+
+		/// The database server hostname or IP address.
+		std::string m_DBHost;
+
+		/// The database server port number.
+		int m_DBPort;
+
+		/// The database data store name.
+		std::string m_DBName;
+
+		/// The database username.
+		std::string m_DBUser;
+
+		/// The database user password.
+		std::string m_DBPassword;
 };
 
 #endif

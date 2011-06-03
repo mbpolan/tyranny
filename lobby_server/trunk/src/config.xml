@@ -8,4 +8,11 @@
 			<port>9191</port>
 		</server>
 	</servers>
+	<mysql>
+		<host>127.0.0.1</host>
+		<port>3306</port>
+		<name>tyranny_lobby</name>
+		<username>root</username>
+		<password>password</password>
+	</mysql>
 </lobby-server-config>

@@ -76,6 +76,16 @@ void ConfigFile::parse() throw(ConfigFile::Exception) {
 			}
 		}
 
+		// mysql connection data
+		else if (xmlStrcmp(child->name, (const xmlChar*) "mysql")==0) {
+			try {
+				parseMySQLSection((void*) child);
+			}
+			catch (const ConfigFile::Exception &ex) {
+				throw ex;
+			}
+		}
+
 		child=child->next;
 	}
 }
@@ -127,4 +137,53 @@ void ConfigFile::parseServerList(void *node) throw(ConfigFile::Exception) {
 
 		snode=snode->next;
 	}
+}
+
+void ConfigFile::parseMySQLSection(void *node) throw(ConfigFile::Exception) {
+	xmlNodePtr child=(xmlNodePtr) node;
+	xmlNodePtr snode=child->children;
+
+	const char *host=NULL;
+	const char *name=NULL;
+	const char *user=NULL;
+	const char *pass=NULL;
+	int port=0;
+
+	while(snode) {
+		if (xmlStrcmp(snode->name, (const xmlChar*) "host")==0)
+			host=(const char*) xmlNodeGetContent(snode);
+
+		else if (xmlStrcmp(snode->name, (const xmlChar*) "name")==0)
+			name=(const char*) xmlNodeGetContent(snode);
+
+		else if (xmlStrcmp(snode->name, (const xmlChar*) "username")==0)
+			user=(const char*) xmlNodeGetContent(snode);
+
+		else if (xmlStrcmp(snode->name, (const xmlChar*) "password")==0)
+			pass=(const char*) xmlNodeGetContent(snode);
+
+		else if (xmlStrcmp(snode->name, (const xmlChar*) "port")==0)
+			port=atoi((const char*) xmlNodeGetContent(snode));
+
+		snode=snode->next;
+	}
+
+	// verify that we have all the needed data
+	if (!host)
+		throw ConfigFile::Exception("Missing host element for MySQL data.");
+	if (!name)
+		throw ConfigFile::Exception("Missing name element for MySQL data.");
+	if (!user)
+		throw ConfigFile::Exception("Missing username element for MySQL data.");
+	if (!pass)
+		throw ConfigFile::Exception("Missing password element for MySQL data.");
+	if (port==0)
+		throw ConfigFile::Exception("Missing port element for MySQL data.");
+
+	// sync all the data
+	m_DBHost=std::string(host);
+	m_DBPort=port;
+	m_DBName=std::string(name);
+	m_DBUser=std::string(user);
+	m_DBPassword=std::string(pass);
 }
