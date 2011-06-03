@@ -24,6 +24,7 @@
 #include <pthread.h>
 
 #include "configfile.h"
+#include "dbmysql.h"
 #include "lobbyserver.h"
 #include "packet.h"
 #include "protspec.h"
@@ -53,17 +54,28 @@ void* connectionHandler(void *arg) {
 		std::string username=rp.string();
 		std::string password=rp.string();
 
-		// dummy values for authentication testing
-		if (username=="user" && password=="test") {
-			p2.addByte(AUTH_SUCCESS);
-			p2.write(socket);
+		try {
+			// create a database connection manager and try to authenticate this user
+			DBMySQL db(g_ConfigFile->getDBHost(), g_ConfigFile->getDBPort(), g_ConfigFile->getDBName());
+			db.connect(g_ConfigFile->getDBUser(), g_ConfigFile->getDBPassword());
+
+			// this username-password pair must exist in the database
+			if (db.authenticate(username, password)) {
+				p2.addByte(AUTH_SUCCESS);
+				p2.write(socket);
+			}
+
+			else {
+				p2.addByte(AUTH_ERROR);
+				p2.addString("Incorrect username or password.");
+				p2.write(socket);
+			}
+
+			db.disconnect();
 		}
 
-		// test authentication failures
-		else {
-			p2.addByte(AUTH_ERROR);
-			p2.addString("Incorrect username or password.");
-			p2.write(socket);
+		catch (const DBMySQL::Exception &ex) {
+			std::cout << "** DBMYSQL *** : " << ex.getMessage() << std::endl;
 		}
 	}
 
