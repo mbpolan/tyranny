@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	connect(ui->actionConnect, SIGNAL(triggered()), this, SLOT(onConnect()));
 	connect(ui->actionDisconnect, SIGNAL(triggered()), this, SLOT(onDisconnect()));
 	connect(ui->actionPreferences, SIGNAL(triggered()), this, SLOT(onPreferences()));
+	connect(ui->sendButton, SIGNAL(clicked()), this, SLOT(onSendButtonClicked()));
 
 	// try to load the preferences file
 	QString ip;
@@ -78,6 +79,9 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(criticalError(QString)), this, SLOT(onNetCriticalError(QString)));
 	connect(m_Network, SIGNAL(networkMessage(QString)), this, SLOT(onNetMessage(QString)));
 	connect(m_Network, SIGNAL(requireAuthentication()), this, SLOT(onNetAuthenticate()));
+	connect(m_Network, SIGNAL(userLoggedIn(QString)), this, SLOT(onNetUserLoggedIn(QString)));
+	connect(m_Network, SIGNAL(userLoggedOut(QString)), this, SLOT(onNetUserLoggedOut(QString)));
+	connect(m_Network, SIGNAL(lobbyChatMessage(QString,QString)), this, SLOT(onNetLobbyChatMessage(QString,QString)));
 
 	m_Network->connectToServer(m_PrefData->getIP(), m_PrefData->getPort());
 }
@@ -106,6 +110,12 @@ void MainWindow::onQuit() {
 
 }
 
+void MainWindow::onSendButtonClicked() {
+	// check to see if the user entered any message
+	if (!ui->chatEdit->text().isEmpty())
+		m_Network->sendChatMessage(ui->chatEdit->text());
+}
+
 void MainWindow::onNetConnected() {
 	ui->statusbar->showMessage(tr("Connected."));
 
@@ -115,6 +125,11 @@ void MainWindow::onNetConnected() {
 
 void MainWindow::onNetDisconnected() {
 	ui->statusbar->showMessage(tr("Disconnected."));
+
+	// clean up the interface elements
+	ui->userList->clear();
+	ui->roomList->clear();
+	ui->chatBox->clear();
 
 	// toggle status of the interface
 	toggleUi(false);
@@ -146,6 +161,35 @@ void MainWindow::onNetCriticalError(const QString &error) {
 
 void MainWindow::onNetMessage(const QString &msg) {
 	ui->statusbar->showMessage(msg);
+}
+
+void MainWindow::onNetUserLoggedIn(const QString &username) {
+	// create a new item for this user
+	QTreeWidgetItem *item=new QTreeWidgetItem(ui->userList);
+	item->setText(0, username);
+	item->setText(1, "0");
+}
+
+void MainWindow::onNetUserLoggedOut(const QString &username) {
+	// start by finding the item with the given username text in the user list
+	for (int i=0; i<ui->userList->topLevelItemCount(); i++) {
+		QTreeWidgetItem *item=ui->userList->topLevelItem(i);
+		if (item->text(0)==username) {
+			ui->userList->takeTopLevelItem(i);
+			delete item;
+		}
+	}
+}
+
+void MainWindow::onNetLobbyChatMessage(const QString &user, const QString &message) {
+	// format the string
+	QString line="<b>"+user+"</b>";
+	line+=": ";
+	line+=message;
+	line+="<br>\n";
+
+	// append the message to the chat buffer
+	ui->chatBox->insertHtml(line);
 }
 
 void MainWindow::toggleUi(bool connected) {

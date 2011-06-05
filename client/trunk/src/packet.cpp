@@ -104,6 +104,8 @@ QString Packet::string() {
 }
 
 bool Packet::read(QTcpSocket *sock) {
+	clear();
+
 	int bytes=sock->read((char*) m_Buffer, 2);
 	if (bytes!=2) {
 		//qDebug() << "Couldnt read packet size, read " << bytes;
@@ -112,13 +114,13 @@ bool Packet::read(QTcpSocket *sock) {
 	
 	m_Size=(m_Buffer[0] | (m_Buffer[1] >> 8));
 	if (m_Size<=0) {
-		//qDebug() << "Corrupt packet size: " << m_Size;
+		qDebug() << "Corrupt packet size: " << m_Size;
 		return false;
 	}
 	
 	bytes=sock->read((char*) m_Buffer+2, m_Size);
 	if (bytes!=m_Size) {
-		//qDebug() << "Expected " << m_Size << " read " << bytes;
+		qDebug() << "Expected " << m_Size << " read " << bytes;
 		return false;
 	}
 	

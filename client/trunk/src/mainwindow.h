@@ -70,6 +70,9 @@ class MainWindow: public QMainWindow {
 		/// Handler for File -> Quit action.
 		void onQuit();
 
+		/// Handler for "Send" button clicks
+		void onSendButtonClicked();
+
 		/// Network handler for an established connection.
 		void onNetConnected();
 
@@ -87,6 +90,15 @@ class MainWindow: public QMainWindow {
 
 		/// Network handler for general messages.
 		void onNetMessage(const QString &msg);
+
+		/// Network handler for when another user logs in.
+		void onNetUserLoggedIn(const QString &username);
+
+		/// Network handler for when another user logs out.
+		void onNetUserLoggedOut(const QString &username);
+
+		/// Network handler for chat messages sent from other users in the lobby.
+		void onNetLobbyChatMessage(const QString &user, const QString &message);
 
 	private:
 		/**
