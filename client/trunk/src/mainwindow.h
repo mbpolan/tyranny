@@ -70,6 +70,9 @@ class MainWindow: public QMainWindow {
 		/// Handler for File -> Quit action.
 		void onQuit();
 
+		/// Handler for Account -> Statistics action.
+		void onStatistics();
+
 		/// Handler for "Send" button clicks
 		void onSendButtonClicked();
 
@@ -99,6 +102,9 @@ class MainWindow: public QMainWindow {
 
 		/// Network handler for chat messages sent from other users in the lobby.
 		void onNetLobbyChatMessage(const QString &user, const QString &message);
+
+		/// Network handler for statistics information.
+		void onNetStatistics(int points, int gamesPlayed, int won, int lost);
 
 	private:
 		/**

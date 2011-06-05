@@ -17,22 +17,29 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the client-server protocol.
+// statsdialog.cpp: implementation of the StatsDialog class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#include <QDebug>
+#include "statsdialog.h"
 
-/// Authentication class packets
-#define AUTH_DATA			0xA0
-#define AUTH_SUCCESS		0xA1
-#define AUTH_ERROR		0xA2
-#define AUTH_LOGOUT		0xA3
-#define AUTH_REQUEST		0xA4
+#include "ui/ui_statsdialog.h"
 
-/// General lobby actions
-#define LB_USERIN			0xB1
-#define LB_USEROUT		0xB2
-#define LB_CHATMESSAGE		0xB3
-#define LB_STATISTICS		0xB4
+StatsDialog::StatsDialog(int points, int gamesPlayed, int won, int lost, QWidget *parent): QDialog(parent) {
+	ui=new Ui::StatsDialog;
+	ui->setupUi(this);
 
-#endif
+	// set the statistics values
+	ui->pointsLabel->setText(QString("%1").arg(points));
+	ui->playedLabel->setText(QString("%1").arg(gamesPlayed));
+	ui->wonLabel->setText(QString("%1").arg(won));
+	ui->lostLabel->setText(QString("%1").arg(lost));
+
+	// avoid dividing by zero
+	if (gamesPlayed>0) {
+		double percent=(double(won)/double(gamesPlayed))*100.0;
+		ui->percentLabel->setText(QString("%1%").arg(percent));
+	}
+
+	else
+		ui->percentLabel->setText("100%");
+}

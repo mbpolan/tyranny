@@ -17,22 +17,40 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the client-server protocol.
+// statsdialog.h: definition of the StatsDialog class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#ifndef STATSDIALOG_H
+#define STATSDIALOG_H
 
-/// Authentication class packets
-#define AUTH_DATA			0xA0
-#define AUTH_SUCCESS		0xA1
-#define AUTH_ERROR		0xA2
-#define AUTH_LOGOUT		0xA3
-#define AUTH_REQUEST		0xA4
+#include <QDialog>
 
-/// General lobby actions
-#define LB_USERIN			0xB1
-#define LB_USEROUT		0xB2
-#define LB_CHATMESSAGE		0xB3
-#define LB_STATISTICS		0xB4
+namespace Ui {
+	class StatsDialog;
+}
+
+/**
+ * Simple dialog for displaying user statistics.
+ * Once a set of statistics for a user has been received from the server, this
+ * dialog formats that data and displays it in a readable way for the user to
+ * review.
+ */
+class StatsDialog: public QDialog {
+	Q_OBJECT
+
+	public:
+		/**
+		 * Creates a dialog with the given statistics information.
+		 *
+		 * @param points The amount of points the played accured.
+		 * @param gamesPlayed The amount of games the player as played.
+		 * @param won The amount of games the player won.
+		 * @param lost The amount of games the player lost.
+		 * @param parent The parent window for this dialog.
+		 */
+		StatsDialog(int points, int gamesPlayed, int won, int lost, QWidget *parent=NULL);
+
+	private:
+		Ui::StatsDialog *ui;
+};
 
 #endif

@@ -55,6 +55,12 @@ void NetManager::sendChatMessage(const QString &message) {
 	p.write(m_Socket);
 }
 
+void NetManager::requestStatistics() {
+	Packet p;
+	p.addByte(LB_STATISTICS);
+	p.write(m_Socket);
+}
+
 void NetManager::onError(QAbstractSocket::SocketError error) {
 	switch(error) {
 		case QAbstractSocket::ConnectionRefusedError: emit networkError("Connection refused by peer."); break;
@@ -79,11 +85,12 @@ void NetManager::parsePacket(Packet &p) {
 	switch(header) {
 		case AUTH_REQUEST: emit requireAuthentication(); break;
 		case AUTH_ERROR: emit criticalError(p.string()); break;
-		case AUTH_SUCCESS: emit networkMessage("Welcome to the user lobby."); break;
+		case AUTH_SUCCESS: emit networkMessage("Welcome to "+p.string()); break;
 
 		case LB_USERIN: emit userLoggedIn(p.string()); break;
 		case LB_USEROUT: emit userLoggedOut(p.string()); break;
 		case LB_CHATMESSAGE: handleLobbyChatMessage(p); break;
+		case LB_STATISTICS: handleStatistics(p); break;
 
 		default: qDebug() << "*** WARNING *** : Unknown packet header: " << header; break;
 	}
@@ -95,4 +102,14 @@ void NetManager::handleLobbyChatMessage(Packet &p) {
 	QString message=p.string();
 
 	emit lobbyChatMessage(sender, message);
+}
+
+void NetManager::handleStatistics(Packet &p) {
+	// get the pertinent data from the packet
+	int points=p.uint32();
+	int games=p.uint32();
+	int won=p.uint32();
+	int lost=p.uint32();
+
+	emit userStatistics(points, games, won, lost);
 }

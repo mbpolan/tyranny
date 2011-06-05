@@ -71,6 +71,11 @@ class NetManager: public QObject {
 		 */
 		void sendChatMessage(const QString &message);
 
+		/**
+		 * Sends a request to the server for this user's statistics.
+		 */
+		void requestStatistics();
+
 	signals:
 		/// Signal emitted when a connection is established.
 		void connected();
@@ -99,6 +104,9 @@ class NetManager: public QObject {
 		/// Signal emitted when a chat message is sent in the lobby.
 		void lobbyChatMessage(const QString &sender, const QString &message);
 
+		/// Signal emitted when the server has responded with the user's statistics.
+		void userStatistics(int points, int gamesPlayed, int won, int lost);
+
 	private slots:
 		/// Handler for socket error condition.
 		void onError(QAbstractSocket::SocketError error);
@@ -120,6 +128,13 @@ class NetManager: public QObject {
 		 * @param p The packet to parse.
 		 */
 		void handleLobbyChatMessage(Packet &p);
+
+		/**
+		 * Parses a packet containing user statistics.
+		 *
+		 * @param p The packet to parse.
+		 */
+		void handleStatistics(Packet &p);
 
 		/// Communications socket.
 		QTcpSocket *m_Socket;
