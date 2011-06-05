@@ -70,6 +70,9 @@ class MainWindow: public QMainWindow {
 		/// Handler for File -> Quit action.
 		void onQuit();
 
+		/// Handler for Account -> Edit Profile action.
+		void onEditProfile();
+
 		/// Handler for Account -> Statistics action.
 		void onStatistics();
 
@@ -105,6 +108,9 @@ class MainWindow: public QMainWindow {
 
 		/// Network handler for statistics information.
 		void onNetStatistics(int points, int gamesPlayed, int won, int lost);
+
+		/// Network handler for user profile information.
+		void onNetUserProfile(const QString &name, const QString &email, int age, const QString &bio);
 
 	private:
 		/**

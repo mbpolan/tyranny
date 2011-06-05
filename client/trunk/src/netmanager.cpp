@@ -61,6 +61,22 @@ void NetManager::requestStatistics() {
 	p.write(m_Socket);
 }
 
+void NetManager::requestUserProfile() {
+	Packet p;
+	p.addByte(LB_USERPROFILE_REQ);
+	p.write(m_Socket);
+}
+
+void NetManager::sendUserProfileUpdate(const QString &name, const QString &email, int age, const QString &bio) {
+	Packet p;
+	p.addByte(LB_USERPROFILE_UPD);
+	p.addString(name);
+	p.addString(email);
+	p.addUint16(age);
+	p.addString(bio);
+	p.write(m_Socket);
+}
+
 void NetManager::onError(QAbstractSocket::SocketError error) {
 	switch(error) {
 		case QAbstractSocket::ConnectionRefusedError: emit networkError("Connection refused by peer."); break;
@@ -91,6 +107,7 @@ void NetManager::parsePacket(Packet &p) {
 		case LB_USEROUT: emit userLoggedOut(p.string()); break;
 		case LB_CHATMESSAGE: handleLobbyChatMessage(p); break;
 		case LB_STATISTICS: handleStatistics(p); break;
+		case LB_USERPROFILE_REQ: handleUserProfileRequest(p); break;
 
 		default: qDebug() << "*** WARNING *** : Unknown packet header: " << header; break;
 	}
@@ -112,4 +129,14 @@ void NetManager::handleStatistics(Packet &p) {
 	int lost=p.uint32();
 
 	emit userStatistics(points, games, won, lost);
+}
+
+void NetManager::handleUserProfileRequest(Packet &p) {
+	// get the pertinent data
+	QString name=p.string();
+	QString email=p.string();
+	int age=p.uint16();
+	QString bio=p.string();
+
+	emit userProfile(name, email, age, bio);
 }

@@ -25,6 +25,7 @@
 #include "iohandler.h"
 #include "mainwindow.h"
 #include "prefdialog.h"
+#include "profiledialog.h"
 #include "statsdialog.h"
 
 #include "ui/ui_mainwindow.h"
@@ -37,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	connect(ui->actionConnect, SIGNAL(triggered()), this, SLOT(onConnect()));
 	connect(ui->actionDisconnect, SIGNAL(triggered()), this, SLOT(onDisconnect()));
 	connect(ui->actionPreferences, SIGNAL(triggered()), this, SLOT(onPreferences()));
+	connect(ui->actionEdit_Profile, SIGNAL(triggered()), this, SLOT(onEditProfile()));
 	connect(ui->actionStatistics, SIGNAL(triggered()), this, SLOT(onStatistics()));
 	connect(ui->sendButton, SIGNAL(clicked()), this, SLOT(onSendButtonClicked()));
 
@@ -84,6 +86,7 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(userLoggedIn(QString)), this, SLOT(onNetUserLoggedIn(QString)));
 	connect(m_Network, SIGNAL(userLoggedOut(QString)), this, SLOT(onNetUserLoggedOut(QString)));
 	connect(m_Network, SIGNAL(lobbyChatMessage(QString,QString)), this, SLOT(onNetLobbyChatMessage(QString,QString)));
+	connect(m_Network, SIGNAL(userProfile(QString,QString,int,QString)), this, SLOT(onNetUserProfile(QString,QString,int,QString)));
 	connect(m_Network, SIGNAL(userStatistics(int,int,int,int)), this, SLOT(onNetStatistics(int,int,int,int)));
 
 	m_Network->connectToServer(m_PrefData->getIP(), m_PrefData->getPort());
@@ -111,6 +114,11 @@ void MainWindow::onPreferences() {
 
 void MainWindow::onQuit() {
 
+}
+
+void MainWindow::onEditProfile() {
+	// request the user's profile data
+	m_Network->requestUserProfile();
 }
 
 void MainWindow::onStatistics() {
@@ -198,6 +206,13 @@ void MainWindow::onNetLobbyChatMessage(const QString &user, const QString &messa
 
 	// append the message to the chat buffer
 	ui->chatBox->insertHtml(line);
+}
+
+void MainWindow::onNetUserProfile(const QString &name, const QString &email, int age, const QString &bio) {
+	// show the profile dialog
+	ProfileDialog pd(name, email, age, bio, this);
+	if (pd.exec()==QDialog::Accepted)
+		m_Network->sendUserProfileUpdate(pd.getName(), pd.getEmailAddress(), pd.getAge(), pd.getBiography());
 }
 
 void MainWindow::onNetStatistics(int points, int gamesPlayed, int won, int lost) {

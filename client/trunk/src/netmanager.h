@@ -76,6 +76,21 @@ class NetManager: public QObject {
 		 */
 		void requestStatistics();
 
+		/**
+		 * Sends a request to the server for this user's profile.
+		 */
+		void requestUserProfile();
+
+		/**
+		 * Sends the server an update user profile.
+		 *
+		 * @param name The user's real name.
+		 * @param email The user's email address.
+		 * @param age The user's age.
+		 * @param bio The user's biography.
+		 */
+		void sendUserProfileUpdate(const QString &name, const QString &email, int age, const QString &bio);
+
 	signals:
 		/// Signal emitted when a connection is established.
 		void connected();
@@ -107,6 +122,9 @@ class NetManager: public QObject {
 		/// Signal emitted when the server has responded with the user's statistics.
 		void userStatistics(int points, int gamesPlayed, int won, int lost);
 
+		/// Signal emitted when the server has responded with the user's profile data.
+		void userProfile(const QString &name, const QString &email, int age, const QString &bio);
+
 	private slots:
 		/// Handler for socket error condition.
 		void onError(QAbstractSocket::SocketError error);
@@ -135,6 +153,13 @@ class NetManager: public QObject {
 		 * @param p The packet to parse.
 		 */
 		void handleStatistics(Packet &p);
+
+		/**
+		 * Parses a packet containing a user's profile data.
+		 *
+		 * @param p The packet to parse.
+		 */
+		void handleUserProfileRequest(Packet &p);
 
 		/// Communications socket.
 		QTcpSocket *m_Socket;
