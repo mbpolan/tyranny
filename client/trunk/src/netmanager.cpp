@@ -48,6 +48,13 @@ void NetManager::sendAuthentication(const QString &username, const QString &pass
 	p.write(m_Socket);
 }
 
+void NetManager::sendChatMessage(const QString &message) {
+	Packet p;
+	p.addByte(LB_CHATMESSAGE);
+	p.addString(message);
+	p.write(m_Socket);
+}
+
 void NetManager::onError(QAbstractSocket::SocketError error) {
 	switch(error) {
 		case QAbstractSocket::ConnectionRefusedError: emit networkError("Connection refused by peer."); break;
@@ -68,12 +75,24 @@ void NetManager::onReadData() {
 }
 
 void NetManager::parsePacket(Packet &p) {
-	int header=p.byte();
+	uint8_t header=p.byte();
 	switch(header) {
 		case AUTH_REQUEST: emit requireAuthentication(); break;
 		case AUTH_ERROR: emit criticalError(p.string()); break;
-		case AUTH_SUCCESS: emit networkMessage("Authentication successful."); break;
+		case AUTH_SUCCESS: emit networkMessage("Welcome to the user lobby."); break;
 
-		default: qDebug() << "*** WARNING *** : Unknown packet header: " << header;
+		case LB_USERIN: emit userLoggedIn(p.string()); break;
+		case LB_USEROUT: emit userLoggedOut(p.string()); break;
+		case LB_CHATMESSAGE: handleLobbyChatMessage(p); break;
+
+		default: qDebug() << "*** WARNING *** : Unknown packet header: " << header; break;
 	}
+}
+
+void NetManager::handleLobbyChatMessage(Packet &p) {
+	// get the information from the packet
+	QString sender=p.string();
+	QString message=p.string();
+
+	emit lobbyChatMessage(sender, message);
 }

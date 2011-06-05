@@ -64,6 +64,13 @@ class NetManager: public QObject {
 		 */
 		void sendAuthentication(const QString &username, const QString &password);
 
+		/**
+		 * Sends a chat message to the lobby.
+		 *
+		 * @param message The chat message to send.
+		 */
+		void sendChatMessage(const QString &message);
+
 	signals:
 		/// Signal emitted when a connection is established.
 		void connected();
@@ -83,6 +90,15 @@ class NetManager: public QObject {
 		/// Signal emitted when a general message should be displayed in the status bar.
 		void networkMessage(const QString &msg);
 
+		/// Signal emitted when another user logs into the lobby.
+		void userLoggedIn(const QString &username);
+
+		/// Signal emitted when another user logs out of the lobby.
+		void userLoggedOut(const QString &username);
+
+		/// Signal emitted when a chat message is sent in the lobby.
+		void lobbyChatMessage(const QString &sender, const QString &message);
+
 	private slots:
 		/// Handler for socket error condition.
 		void onError(QAbstractSocket::SocketError error);
@@ -97,6 +113,13 @@ class NetManager: public QObject {
 		 * @param p The packet to parse.
 		 */
 		void parsePacket(Packet &p);
+
+		/**
+		 * Parses a sent chat message to the lobby.
+		 *
+		 * @param p The packet to parse.
+		 */
+		void handleLobbyChatMessage(Packet &p);
 
 		/// Communications socket.
 		QTcpSocket *m_Socket;
