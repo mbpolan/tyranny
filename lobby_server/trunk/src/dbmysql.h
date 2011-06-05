@@ -107,6 +107,28 @@ class DBMySQL {
 		 */
 		void getUserStatistics(const std::string &username, int &points, int &gamesPlayed, int &won, int &lost) throw(DBMySQL::Exception);
 
+		/**
+		 * Returns the user's profile data as recorded in the database.
+		 *
+		 * @param username The user for whom to get a profile.
+		 * @param name The user's real name.
+		 * @param email The user's email address.
+		 * @param age The user's age.
+		 * @param bio The user's biography.
+		 */
+		void getUserProfile(const std::string &username, std::string &name, std::string &email, int &age, std::string &bio) throw(DBMySQL::Exception);
+
+		/**
+		 * Updates the user's profile data and stores it in the database.
+		 *
+		 * @param username The user for whom to update the profile.
+		 * @param name The user's real name.
+		 * @param email The user's email address.
+		 * @param age The user's age.
+		 * @param bio The user's biography.
+		 */
+		void updateUserProfile(const std::string &username, const std::string &name, const std::string &email, int &age, const std::string &bio) throw(DBMySQL::Exception);
+
 	private:
 		/// The server address.
 		std::string m_Host;

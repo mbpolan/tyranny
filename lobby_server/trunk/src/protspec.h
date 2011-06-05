@@ -34,5 +34,7 @@
 #define LB_USEROUT			0xB2
 #define LB_CHATMESSAGE		0xB3
 #define LB_STATISTICS		0xB4
+#define LB_USERPROFILE_REQ	0xB5
+#define LB_USERPROFILE_UPD	0xB6
 
 #endif
