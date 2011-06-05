@@ -5,7 +5,9 @@ tyranny_lobby_server_SOURCES = \
 	lobbyserver.cpp lobbyserver.h \
 	packet.cpp packet.h \
 	protocol.cpp protocol.h \
-	serversocket.cpp serversocket.h
+	serversocket.cpp serversocket.h \
+	user.cpp user.h \
+	usermanager.cpp usermanager.h
 
 AM_CPPFLAGS = $(all_includes) -I/usr/include/libxml2 `mysql_config --cflags`
 

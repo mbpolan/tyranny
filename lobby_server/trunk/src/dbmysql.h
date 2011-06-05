@@ -25,6 +25,8 @@
 #include <iostream>
 #include <mysql/mysql.h>
 
+#include "user.h"
+
 class DBMySQL {
 	public:
 		/**
@@ -40,6 +42,7 @@ class DBMySQL {
 				 * @return Message string
 				 */
 				std::string getMessage() const { return m_Message; }
+
 			private:
 				/// The message for this exception.
 				std::string m_Message;
@@ -84,6 +87,14 @@ class DBMySQL {
 		 * @return True if the user is valid and can login, false otherwise.
 		 */
 		bool authenticate(const std::string &username, const std::string &password) throw(DBMySQL::Exception);
+
+		/**
+		 * Gathers and loads a user's data from the database.
+		 *
+		 * @param user The user to load.
+		 * @throw An exception if an error occurred.
+		 */
+		void loadUser(User *user) throw(DBMySQL::Exception);
 
 	private:
 		/// The server address.
