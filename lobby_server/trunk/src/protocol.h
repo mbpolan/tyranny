@@ -90,6 +90,20 @@ class Protocol {
 		 */
 		void handleStatistics(Packet &p);
 
+		/**
+		 * Handles updating a user's profile data.
+		 *
+		 * @param p The packet to parse.
+		 */
+		void handleUserProfileRequest(Packet &p);
+
+		/**
+		 * Handles updating a user's profile.
+		 *
+		 * @param p The packet to parse.
+		 */
+		void handleUserProfileUpdate(Packet &p);
+
 		/// The user associated with this protocol.
 		User *m_User;
 

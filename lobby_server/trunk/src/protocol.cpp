@@ -74,6 +74,12 @@ void Protocol::parsePacket(Packet &p) {
 		// user requested his/her statistics
 		case LB_STATISTICS: handleStatistics(p); break;
 
+		// user requested his/her profile
+		case LB_USERPROFILE_REQ: handleUserProfileRequest(p); break;
+
+		// user sent an updated profile to be stored
+		case LB_USERPROFILE_UPD: handleUserProfileUpdate(p); break;
+
 		default: break;
 	}
 }
@@ -109,5 +115,54 @@ void Protocol::handleStatistics(Packet &p) {
 
 	catch (const DBMySQL::Exception &ex) {
 		std::cout << "Unable to get statistics from database: " << ex.getMessage() << std::endl;
+	}
+}
+
+void Protocol::handleUserProfileRequest(Packet &p) {
+	ConfigFile *cfg=ConfigFile::instance();
+	std::string name, email, bio;
+	int age;
+
+	try {
+		// connect to the database and get the profile data
+		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
+		db.connect(cfg->getDBUser(), cfg->getDBPassword());
+		db.getUserProfile(m_User->getUsername(), name, email, age, bio);
+		db.disconnect();
+
+		// reply to the client
+		Packet p;
+		p.addByte(LB_USERPROFILE_REQ);
+		p.addString(name);
+		p.addString(email);
+		p.addUint16(age);
+		p.addString(bio);
+		p.write(m_Socket);
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to get user profile from database: " << ex.getMessage() << std::endl;
+	}
+}
+
+void Protocol::handleUserProfileUpdate(Packet &p) {
+	ConfigFile *cfg=ConfigFile::instance();
+
+	// cache the packet data
+	std::string name=p.string();
+	std::string email=p.string();
+	int age=p.uint16();
+	std::string bio=p.string();
+
+	try {
+		// connect to the database and update the profile data
+		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
+		db.connect(cfg->getDBUser(), cfg->getDBPassword());
+		db.updateUserProfile(m_User->getUsername(), name, email, age, bio);
+		db.disconnect();
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to update user profile: " << ex.getMessage() << std::endl;
 	}
 }

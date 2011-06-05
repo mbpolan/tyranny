@@ -21,6 +21,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <sstream>
 
 #include "dbmysql.h"
 
@@ -149,4 +150,48 @@ void DBMySQL::getUserStatistics(const std::string &username, int &points, int &g
 
 	// we're done
 	mysql_free_result(result);
+}
+
+void DBMySQL::getUserProfile(const std::string &username, std::string &name, std::string &email, int &age, std::string &bio) throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// form the sql string
+	std::string sql="SELECT real_name, email, age, bio FROM users WHERE username='"+username+"'";
+
+	// query the server
+	if (mysql_query(m_Handle, sql.c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+
+	// get the results
+	MYSQL_RES *result=mysql_store_result(m_Handle);
+	MYSQL_ROW row=mysql_fetch_row(result);
+
+	if (!row) {
+		mysql_free_result(result);
+		throw DBMySQL::Exception("The given user could not be found in the database.");
+	}
+
+	// now get the data
+	name=std::string(row[0]);
+	email=std::string(row[1]);
+	age=atoi(row[2]);
+	bio=std::string(row[3]);
+
+	// free memory
+	mysql_free_result(result);
+}
+
+void DBMySQL::updateUserProfile(const std::string &username, const std::string &name, const std::string &email, int &age, const std::string &bio) throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// form the sql string
+	std::stringstream ss;
+	ss  << "UPDATE users SET real_name='" << name << "', email='" << email << "', age="
+		<< age << ", bio='" << bio << "' WHERE username='" << username << "'";
+
+	// query the server
+	if (mysql_query(m_Handle, ss.str().c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
 }
