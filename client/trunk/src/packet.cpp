@@ -40,7 +40,7 @@ void Packet::addByte(uint8_t n) {
 void Packet::addUint16(uint16_t n) {
 	// pack a 16-bit integer into the buffer
 	m_Buffer[m_Pos++]=n;
-	m_Buffer[m_Pos++]=(n << 8);
+	m_Buffer[m_Pos++]=(n >> 8);
 	
 	m_Size+=2;
 }
@@ -48,9 +48,9 @@ void Packet::addUint16(uint16_t n) {
 void Packet::addUint32(uint32_t n) {
 	// pack a 32-bit integer into the buffer
 	m_Buffer[m_Pos++]=n;
-	m_Buffer[m_Pos++]=(n << 8);
-	m_Buffer[m_Pos++]=(n << 16);
-	m_Buffer[m_Pos++]=(n << 24);
+	m_Buffer[m_Pos++]=(n >> 8);
+	m_Buffer[m_Pos++]=(n >> 16);
+	m_Buffer[m_Pos++]=(n >> 24);
 	
 	m_Size+=4;
 }
@@ -74,7 +74,7 @@ uint8_t Packet::byte() {
 
 uint16_t Packet::uint16() {
 	// unpack a 16-bit integer from the buffer
-	uint16_t n=(m_Buffer[m_Pos] | (m_Buffer[m_Pos+1] >> 8));
+	uint16_t n=(m_Buffer[m_Pos] | (m_Buffer[m_Pos+1] << 8));
 	m_Pos+=2;
 	
 	return n;
@@ -82,8 +82,8 @@ uint16_t Packet::uint16() {
 
 uint32_t Packet::uint32() {
 	// unpack a 32-bit integer from the packet
-	uint32_t n=(m_Buffer[m_Pos] | (m_Buffer[m_Pos+1] >> 8) |
-				(m_Buffer[m_Pos+2] >> 16) | (m_Buffer[m_Pos+3] >> 24));
+	uint32_t n=(m_Buffer[m_Pos] | (m_Buffer[m_Pos+1] << 8) |
+			(m_Buffer[m_Pos+2] << 16) | (m_Buffer[m_Pos+3] << 24));
 	m_Pos+=4;
 	
 	return n;
