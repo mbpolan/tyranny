@@ -19,6 +19,8 @@
  ***************************************************************************/
 // protocol.cpp: implementation of the Protocol class.
 
+#include "configfile.h"
+#include "dbmysql.h"
 #include "packet.h"
 #include "protocol.h"
 #include "protspec.h"
@@ -69,6 +71,9 @@ void Protocol::parsePacket(Packet &p) {
 		// user sent a chat message
 		case LB_CHATMESSAGE: handleUserChatMessage(p); break;
 
+		// user requested his/her statistics
+		case LB_STATISTICS: handleStatistics(p); break;
+
 		default: break;
 	}
 }
@@ -79,4 +84,30 @@ void Protocol::handleUserChatMessage(Packet &p) {
 
 	// let the user manager handle this action
 	UserManager::instance()->broadcastChatMessage(m_User->getUsername(), message);
+}
+
+void Protocol::handleStatistics(Packet &p) {
+	ConfigFile *cfg=ConfigFile::instance();
+	int points, gamesPlayed, won, lost;
+
+	try {
+		// connect to the database and get the statistics
+		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
+		db.connect(cfg->getDBUser(), cfg->getDBPassword());
+		db.getUserStatistics(m_User->getUsername(), points, gamesPlayed, won, lost);
+		db.disconnect();
+
+		// reply to the client
+		Packet p;
+		p.addByte(LB_STATISTICS);
+		p.addUint32(points);
+		p.addUint32(gamesPlayed);
+		p.addUint32(won);
+		p.addUint32(lost);
+		p.write(m_Socket);
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to get statistics from database: " << ex.getMessage() << std::endl;
+	}
 }

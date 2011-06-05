@@ -83,6 +83,13 @@ class Protocol {
 		 */
 		void handleUserChatMessage(Packet &p);
 
+		/**
+		 * Handles gathering and sending a user his/her statistics.
+		 *
+		 * @param p The packet to parse.
+		 */
+		void handleStatistics(Packet &p);
+
 		/// The user associated with this protocol.
 		User *m_User;
 

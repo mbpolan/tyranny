@@ -20,6 +20,7 @@
 // dbmysql.cpp: implementation of the DBMySQL class.
 
 #include <cstring>
+#include <cstdlib>
 
 #include "dbmysql.h"
 
@@ -103,6 +104,11 @@ void DBMySQL::loadUser(User *user) throw(DBMySQL::Exception) {
 	MYSQL_RES *result=mysql_store_result(m_Handle);
 	MYSQL_ROW row=mysql_fetch_row(result);
 
+	if (!row) {
+		mysql_free_result(result);
+		throw DBMySQL::Exception("The given user could not be found in the database.");
+	}
+
 	// email address (column indexed 3)
 	if (row[3])
 		user->setEmail(std::string(row[3]));
@@ -112,5 +118,35 @@ void DBMySQL::loadUser(User *user) throw(DBMySQL::Exception) {
 		user->setIsMuted((int) row[5]);
 
 	// clean up
+	mysql_free_result(result);
+}
+
+void DBMySQL::getUserStatistics(const std::string &username, int &points, int &gamesPlayed, int &won, int &lost) throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// form the sql string
+	std::string sql="SELECT points, games_played, won, lost FROM statistics WHERE uid=(SELECT uid FROM users WHERE username='"+username+"')";
+
+	// query the server
+	if (mysql_query(m_Handle, sql.c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+
+	// get the results
+	MYSQL_RES *result=mysql_store_result(m_Handle);
+	MYSQL_ROW row=mysql_fetch_row(result);
+
+	if (!row) {
+		mysql_free_result(result);
+		throw DBMySQL::Exception("The given user could not be found in the database.");
+	}
+
+	// now get the data
+	points=atoi(row[0]);
+	gamesPlayed=atoi(row[1]);
+	won=atoi(row[2]);
+	lost=atoi(row[3]);
+
+	// we're done
 	mysql_free_result(result);
 }
