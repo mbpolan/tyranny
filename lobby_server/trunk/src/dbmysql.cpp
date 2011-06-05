@@ -87,3 +87,30 @@ bool DBMySQL::authenticate(const std::string &username, const std::string &passw
 
 	return success;
 }
+
+void DBMySQL::loadUser(User *user) throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// form the sql string
+	std::string sql="SELECT * FROM users WHERE username='"+user->getUsername()+"'";
+
+	// and query the server
+	if (mysql_query(m_Handle, sql.c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+
+	// grab the results
+	MYSQL_RES *result=mysql_store_result(m_Handle);
+	MYSQL_ROW row=mysql_fetch_row(result);
+
+	// email address (column indexed 3)
+	if (row[3])
+		user->setEmail(std::string(row[3]));
+
+	// muted flag
+	if (row[5])
+		user->setIsMuted((int) row[5]);
+
+	// clean up
+	mysql_free_result(result);
+}

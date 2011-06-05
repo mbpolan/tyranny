@@ -17,77 +17,63 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protocol.h: definition of the Protocol class.
+// usermanager.h: definition of the UserManager class.
 
-#ifndef PROTOCOL_H
-#define PROTOCOL_H
+#ifndef USERMANAGER_H
+#define USERMANAGER_H
 
-#include "packet.h"
+#include <iostream>
+#include <map>
+#include <pthread.h>
 
-class User;
+#include "user.h"
 
-class Protocol {
+class UserManager {
 	public:
-		/**
-		 * Default constructor.
-		 * @param socket Socket to associate with this protocol.
-		 */
-		Protocol(int socket);
+		/// Default constructor.
+		UserManager();
 
 		/**
-		 * Sets the user associated with this protocol.
+		 * Cleans up data associated with this management pool.
+		 * Note that no User object pointers are destroyed by this method.
+		 */
+		~UserManager();
+
+		/**
+		 * Returns a pointer to the global user manager.
 		 *
-		 * @param user The user to associate.
+		 * @return A pointer to a UserManager object.
 		 */
-		void setUser(User *user) { m_User=user; }
+		static UserManager* instance();
 
 		/**
-		 * Begins the communication loop with the client.
-		 */
-		void communicationLoop();
-
-		/**
-		 * Sends this user's client a packet containing the details of a new user who logged in.
+		 * Adds a user to the management pool.
 		 *
-		 * @param user The user who just logged in.
+		 * @param user The user to add.
 		 */
-		void sendUserLoggedIn(User *other);
+		void addUser(User *user);
 
 		/**
-		 * Sends this user's client a packet containing the details of a user who logged out.
+		 * Removes a user from the management pool.
 		 *
-		 * @param user The user who just logged out.
+		 * @param user The user to remove.
 		 */
-		void sendUserLoggedOut(User *other);
+		void removeUser(User *user);
 
 		/**
-		 * Sends this user a chat message from another user.
+		 * Sends a chat message to all clients from another user.
 		 *
 		 * @param user The user who sent the message.
 		 * @param message The contents of the message.
 		 */
-		void sendChatMessage(const std::string &user, const std::string &message);
+		void broadcastChatMessage(const std::string &user, const std::string &message);
 
 	private:
-		/**
-		 * Parses and evaluates a given packet.
-		 *
-		 * @param p The packet to parse.
-		 */
-		void parsePacket(Packet &p);
+		/// Map of users, hashed according to their usernames.
+		std::map<std::string, User*> m_UserMap;
 
-		/**
-		 * Handles a user sending a chat message.
-		 *
-		 * @param p The packet to parse.
-		 */
-		void handleUserChatMessage(Packet &p);
-
-		/// The user associated with this protocol.
-		User *m_User;
-
-		/// Socket for reading/writing data between the server and client.
-		int m_Socket;
+		/// Synchronization variables.
+		pthread_mutex_t m_Mutex;
 };
 
 #endif

@@ -17,66 +17,12 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protocol.cpp: implementation of the Protocol class.
+// user.cpp: implementation of the User class.
 
-#include "packet.h"
-#include "protocol.h"
-#include "protspec.h"
 #include "user.h"
-#include "usermanager.h"
 
-Protocol::Protocol(int socket): m_Socket(socket) {
-	m_User=NULL;
-}
-
-void Protocol::communicationLoop() {
-	Packet p;
-	Packet::Result res;
-
-	do {
-		// read a single packet
-		res=p.read(m_Socket);
-		parsePacket(p);
-
-	} while(res!=Packet::DataCorrupt && res!=Packet::Disconnected);
-}
-
-void Protocol::sendUserLoggedIn(User *other) {
-	Packet p;
-	p.addByte(LB_USERIN);
-	p.addString(other->getUsername());
-	p.write(m_Socket);
-}
-
-void Protocol::sendUserLoggedOut(User *other) {
-	Packet p;
-	p.addByte(LB_USEROUT);
-	p.addString(other->getUsername());
-	p.write(m_Socket);
-}
-
-void Protocol::sendChatMessage(const std::string &user, const std::string &message) {
-	Packet p;
-	p.addByte(LB_CHATMESSAGE);
-	p.addString(user);
-	p.addString(message);
-	p.write(m_Socket);
-}
-
-void Protocol::parsePacket(Packet &p) {
-	uint8_t header=p.byte();
-	switch(header) {
-		// user sent a chat message
-		case LB_CHATMESSAGE: handleUserChatMessage(p); break;
-
-		default: break;
-	}
-}
-
-void Protocol::handleUserChatMessage(Packet &p) {
-	// get the message contents
-	std::string message=p.string();
-
-	// let the user manager handle this action
-	UserManager::instance()->broadcastChatMessage(m_User->getUsername(), message);
+User::User(const std::string &username, const std::string &password) {
+	m_Username=username;
+	m_Password=password;
+	m_Protocol=NULL;
 }

@@ -30,9 +30,12 @@
 #include "protspec.h"
 #include "protocol.h"
 #include "serversocket.h"
+#include "user.h"
+#include "usermanager.h"
 
 // globals
 ConfigFile *g_ConfigFile;
+UserManager *g_UserManager;
 
 void* connectionHandler(void *arg) {
 	ServerSocket::Client *data=(ServerSocket::Client*) arg;
@@ -61,8 +64,29 @@ void* connectionHandler(void *arg) {
 
 			// this username-password pair must exist in the database
 			if (db.authenticate(username, password)) {
+				// update the client
 				p2.addByte(AUTH_SUCCESS);
 				p2.write(socket);
+
+				// load this user's data from the database
+				User *user=new User(username, password);
+				db.loadUser(user);
+
+				// create a new protocol object
+				Protocol *p=new Protocol(socket);
+				p->setUser(user);
+				user->setProtocol(p);
+
+				// add him to the pool
+				g_UserManager->addUser(user);
+
+				// begin the communications loop
+				p->communicationLoop();
+
+				// we're done with this user
+				g_UserManager->removeUser(user);
+				delete user;
+				delete p;
 			}
 
 			else {
@@ -86,8 +110,6 @@ void* connectionHandler(void *arg) {
 		p2.addString("Unexpected response packet.");
 		p2.write(socket);
 	}
-
-	sleep(5);
 
 	close(socket);
 	
@@ -130,6 +152,12 @@ int main(int argc, char *argv[]) {
 		exit(0);
 	}
 	
+	std::cout << "[done]\n";
+	std::cout << "Creating user manager...\t";
+
+	// create the user manager
+	g_UserManager=new UserManager;
+
 	std::cout << "[done]\n";
 
 	// print out some status messages

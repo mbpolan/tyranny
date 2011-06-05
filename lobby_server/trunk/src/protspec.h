@@ -29,4 +29,9 @@
 #define AUTH_LOGOUT			0xA3
 #define AUTH_REQUEST		0xA4
 
+/// General lobby actions
+#define LB_USERIN			0xB1
+#define LB_USEROUT			0xB2
+#define LB_CHATMESSAGE		0xB3
+
 #endif
