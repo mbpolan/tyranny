@@ -17,24 +17,67 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the client-server protocol.
+// profiledialog.h: definition of the ProfileDialog class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#ifndef PROFILEDIALOG_H
+#define PROFILEDIALOG_H
 
-/// Authentication class packets
-#define AUTH_DATA			0xA0
-#define AUTH_SUCCESS		0xA1
-#define AUTH_ERROR		0xA2
-#define AUTH_LOGOUT		0xA3
-#define AUTH_REQUEST		0xA4
+#include <QDialog>
 
-/// General lobby actions
-#define LB_USERIN			0xB1
-#define LB_USEROUT		0xB2
-#define LB_CHATMESSAGE		0xB3
-#define LB_STATISTICS		0xB4
-#define LB_USERPROFILE_REQ	0xB5
-#define LB_USERPROFILE_UPD	0xB6
+namespace Ui {
+	class ProfileDialog;
+}
+
+/**
+ * Dialog used to present the user with his/her profile data.
+ * User's can have public profiles, and this dialog allows the user to
+ * edit their data.
+ */
+class ProfileDialog: public QDialog {
+	Q_OBJECT
+
+	public:
+		/**
+		 * Creates a profile editor dialog with the given data.
+		 *
+		 * @param realName The user's real name.
+		 * @param email The user's email address.
+		 * @param age The user's age.
+		 * @param bio The user's biography.
+		 * @param parent The parent window for this dialog.
+		 */
+		ProfileDialog(const QString &realName="", const QString &email="", int age=0, const QString &bio="", QWidget *parent=NULL);
+
+		/**
+		 * Return's the inputted real name.
+		 *
+		 * @return The user's real name.
+		 */
+		QString getName() const;
+
+		/**
+		 * Returns the inputted email address.
+		 *
+		 * @return The user's email address.
+		 */
+		QString getEmailAddress() const;
+
+		/**
+		 * Returns the inputted age.
+		 *
+		 * @return The user's age.
+		 */
+		int getAge() const;
+
+		/**
+		 * Returns the inputted biography string.
+		 *
+		 * @return The user's biography.
+		 */
+		QString getBiography() const;
+
+	private:
+		Ui::ProfileDialog *ui;
+};
 
 #endif

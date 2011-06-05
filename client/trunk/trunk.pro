@@ -19,15 +19,18 @@ HEADERS += src/mainwindow.h \
     src/netmanager.h \
     src/packet.h \
     src/protspec.h \
-    src/statsdialog.h
+    src/statsdialog.h \
+    src/profiledialog.h
 FORMS += src/ui/mainwindow.ui \
     src/ui/prefdialog.ui \
     src/ui/authdialog.ui \
-    src/ui/statsdialog.ui
+    src/ui/statsdialog.ui \
+    src/ui/profiledialog.ui
 SOURCES += src/client.cpp src/mainwindow.cpp \
     src/prefdialog.cpp \
     src/iohandler.cpp \
     src/authdialog.cpp \
     src/netmanager.cpp \
     src/packet.cpp \
-    src/statsdialog.cpp
+    src/statsdialog.cpp \
+    src/profiledialog.cpp

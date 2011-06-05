@@ -17,24 +17,35 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the client-server protocol.
+// profiledialog.cpp: implementation of the ProfileDialog class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#include "profiledialog.h"
 
-/// Authentication class packets
-#define AUTH_DATA			0xA0
-#define AUTH_SUCCESS		0xA1
-#define AUTH_ERROR		0xA2
-#define AUTH_LOGOUT		0xA3
-#define AUTH_REQUEST		0xA4
+#include "ui/ui_profiledialog.h"
 
-/// General lobby actions
-#define LB_USERIN			0xB1
-#define LB_USEROUT		0xB2
-#define LB_CHATMESSAGE		0xB3
-#define LB_STATISTICS		0xB4
-#define LB_USERPROFILE_REQ	0xB5
-#define LB_USERPROFILE_UPD	0xB6
+ProfileDialog::ProfileDialog(const QString &realName, const QString &email, int age, const QString &bio, QWidget *parent): QDialog(parent) {
+	ui=new Ui::ProfileDialog;
+	ui->setupUi(this);
 
-#endif
+	// set the given data
+	ui->nameEdit->setText(realName);
+	ui->emailEdit->setText(email);
+	ui->ageBox->setValue(age);
+	ui->bioEdit->setText(bio);
+}
+
+QString ProfileDialog::getName() const {
+	return ui->nameEdit->text();
+}
+
+QString ProfileDialog::getEmailAddress() const {
+	return ui->emailEdit->text();
+}
+
+int ProfileDialog::getAge() const {
+	return ui->ageBox->value();
+}
+
+QString ProfileDialog::getBiography() const {
+	return ui->bioEdit->toPlainText();
+}
