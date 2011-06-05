@@ -24,13 +24,23 @@
 
 #include "configfile.h"
 
+// global configuration file
+ConfigFile *g_CfgFile=NULL;
+
 ConfigFile::ConfigFile(const std::string &path) {
 	m_Path=path;
 
 	// set some defaults
+	m_Name="Tyranny Lobby Server";
 	m_IP="";
 	m_Port=0;
 	m_MaxClients=0;
+
+	g_CfgFile=this;
+}
+
+ConfigFile* ConfigFile::instance() {
+	return g_CfgFile;
 }
 
 void ConfigFile::parse() throw(ConfigFile::Exception) {
@@ -50,8 +60,12 @@ void ConfigFile::parse() throw(ConfigFile::Exception) {
 	// start walking the document
 	xmlNodePtr child=root->children;
 	while(child) {
+		// server name
+		if (xmlStrcmp(child->name, (const xmlChar*) "name")==0)
+			m_Name=std::string((const char*) xmlNodeGetContent(child));
+
 		// ip address
-		if (xmlStrcmp(child->name, (const xmlChar*) "ip")==0)
+		else if (xmlStrcmp(child->name, (const xmlChar*) "ip")==0)
 			m_IP=std::string((const char*) xmlNodeGetContent(child));
 
 		// port

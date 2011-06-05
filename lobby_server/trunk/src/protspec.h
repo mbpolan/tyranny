@@ -33,5 +33,6 @@
 #define LB_USERIN			0xB1
 #define LB_USEROUT			0xB2
 #define LB_CHATMESSAGE		0xB3
+#define LB_STATISTICS		0xB4
 
 #endif

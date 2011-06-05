@@ -37,6 +37,11 @@ void ServerSocket::bind() throw(ServerSocket::Exception) {
 	if (m_Socket<0)
 		throw ServerSocket::Exception("Unable to create socket.");
 	
+	// avoid the annoying "address already in use" message
+	int yes;
+	if (setsockopt(m_Socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int))<0)
+		throw ServerSocket::Exception("Unable to set socket options.");
+
 	// populate a server socket struct
 	struct sockaddr_in sa;
 	sa.sin_family=AF_INET;

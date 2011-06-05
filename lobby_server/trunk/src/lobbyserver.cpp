@@ -66,6 +66,7 @@ void* connectionHandler(void *arg) {
 			if (db.authenticate(username, password)) {
 				// update the client
 				p2.addByte(AUTH_SUCCESS);
+				p2.addString(g_ConfigFile->getName());
 				p2.write(socket);
 
 				// load this user's data from the database

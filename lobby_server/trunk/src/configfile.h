@@ -102,10 +102,23 @@ class ConfigFile {
 		ConfigFile(const std::string &path);
 
 		/**
+		 * Returns an instance to the global configuration file.
+		 *
+		 * @return A pointer to a ConfigFile object.
+		 */
+		static ConfigFile* instance();
+
+		/**
 		 * Parses the set configuration file and caches data.
 		 * @throw A ConfigFile::Exception if an error occurs.
 		 */
 		void parse() throw(ConfigFile::Exception);
+
+		/**
+		 * Returns name for this server.
+		 * @return The server name.
+		 */
+		std::string getName() const { return m_Name; }
 
 		/**
 		 * Returns the assigned IP address for the server.
@@ -176,6 +189,9 @@ class ConfigFile {
 
 		/// The path of the configuration file to load.
 		std::string m_Path;
+
+		/// The server name.
+		std::string m_Name;
 
 		/// IP address to bind to.
 		std::string m_IP;

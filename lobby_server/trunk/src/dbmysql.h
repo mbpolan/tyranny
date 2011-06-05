@@ -96,6 +96,17 @@ class DBMySQL {
 		 */
 		void loadUser(User *user) throw(DBMySQL::Exception);
 
+		/**
+		 * Returns the user's game statistics as recorded in the database.
+		 *
+		 * @param username The user for whom to get statistics.
+		 * @param points The points for the user.
+		 * @param gamesPlayed The amount of games the user played.
+		 * @param won The amount of games the user won.
+		 * @param lost The amount of games the user lost.
+		 */
+		void getUserStatistics(const std::string &username, int &points, int &gamesPlayed, int &won, int &lost) throw(DBMySQL::Exception);
+
 	private:
 		/// The server address.
 		std::string m_Host;

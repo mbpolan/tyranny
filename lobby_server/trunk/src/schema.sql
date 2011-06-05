@@ -14,10 +14,14 @@ CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`users` (
   `uid` INT NOT NULL ,
   `username` VARCHAR(45) NULL ,
   `password` VARCHAR(45) NULL ,
+  `real_name` VARCHAR(50) NULL ,
   `email` VARCHAR(45) NULL ,
+  `bio` VARCHAR(100) NULL ,
+  `age` INT NULL ,
   `online` TINYINT(1)  NULL ,
   `muted` TINYINT(1)  NULL ,
   PRIMARY KEY (`uid`) );
+
 
 -- -----------------------------------------------------
 -- Table `tyranny_lobby`.`profiles`
@@ -35,8 +39,8 @@ CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`profiles` (
   CONSTRAINT `uid`
     FOREIGN KEY (`uid` )
     REFERENCES `tyranny_lobby`.`users` (`uid` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION);
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
 
 
 -- -----------------------------------------------------
@@ -55,8 +59,8 @@ CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`rooms` (
   CONSTRAINT `uid`
     FOREIGN KEY (`uid` )
     REFERENCES `tyranny_lobby`.`users` (`uid` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION);
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
 
 
 -- -----------------------------------------------------
@@ -73,8 +77,8 @@ CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`participants` (
   CONSTRAINT `uid`
     FOREIGN KEY (`uid` )
     REFERENCES `tyranny_lobby`.`users` (`uid` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
   CONSTRAINT `gid`
     FOREIGN KEY (`gid` )
     REFERENCES `tyranny_lobby`.`rooms` (`gid` )
@@ -93,12 +97,12 @@ CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`userlists` (
   `added` DATETIME NULL ,
   `blocked` TINYINT(1)  NULL ,
   PRIMARY KEY (`uid`) ,
-  INDEX `uid-friend_id` (`other_id` ASC, `uid` ASC) ,
+  INDEX `uid-friend_id` (`uid` ASC, `other_id` ASC) ,
   CONSTRAINT `uid-friend_id`
-    FOREIGN KEY (`other_id` , `uid` )
+    FOREIGN KEY (`uid` , `other_id` )
     REFERENCES `tyranny_lobby`.`users` (`uid` , `uid` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION);
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
 
 
 -- -----------------------------------------------------
@@ -118,8 +122,28 @@ CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`bans` (
   CONSTRAINT `uid-authority`
     FOREIGN KEY (`uid` , `authority` )
     REFERENCES `tyranny_lobby`.`users` (`uid` , `uid` )
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION);
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
+
+
+-- -----------------------------------------------------
+-- Table `tyranny_lobby`.`statistics`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `tyranny_lobby`.`statistics` ;
+
+CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`statistics` (
+  `uid` INT NOT NULL ,
+  `points` INT NULL ,
+  `games_played` INT NULL ,
+  `won` INT NULL ,
+  `lost` INT NULL ,
+  PRIMARY KEY (`uid`) ,
+  INDEX `uid` (`uid` ASC) ,
+  CONSTRAINT `uid`
+    FOREIGN KEY (`uid` )
+    REFERENCES `tyranny_lobby`.`users` (`uid` )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE);
 
 
 
