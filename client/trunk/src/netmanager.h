@@ -72,6 +72,30 @@ class NetManager: public QObject {
 		void sendChatMessage(const QString &message);
 
 		/**
+		 * Sends a request to the server for this user's friend list.
+		 */
+		void requestFriendList();
+
+		/**
+		 * Sends the server an updated list of friends.
+		 *
+		 * @param list The new friend list.
+		 */
+		void sendFriendListUpdate(const QStringList &list);
+
+		/**
+		 * Sends a request to the server for this user's blocked user list.
+		 */
+		void requestBlockedList();
+
+		/**
+		 * Sends the server an updated list of blocked users.
+		 *
+		 * @param list The new blocked user list.
+		 */
+		void sendBlockedListUpdate(const QStringList &list);
+
+		/**
 		 * Sends a request to the server for this user's statistics.
 		 */
 		void requestStatistics();
@@ -90,6 +114,13 @@ class NetManager: public QObject {
 		 * @param bio The user's biography.
 		 */
 		void sendUserProfileUpdate(const QString &name, const QString &email, int age, const QString &bio);
+
+		/**
+		 * Sends the server a new password for this user.
+		 *
+		 * @param password The new password.
+		 */
+		void sendPasswordChange(const QString &password);
 
 	signals:
 		/// Signal emitted when a connection is established.
@@ -119,6 +150,12 @@ class NetManager: public QObject {
 		/// Signal emitted when a chat message is sent in the lobby.
 		void lobbyChatMessage(const QString &sender, const QString &message);
 
+		/// Signal emitted when the server has responded with the user's friends list.
+		void userFriendList(const QStringList &friends);
+
+		/// Signal emitted when the server has responded with the user's blocked list.
+		void userBlockedList(const QStringList &blocked);
+
 		/// Signal emitted when the server has responded with the user's statistics.
 		void userStatistics(int points, int gamesPlayed, int won, int lost);
 
@@ -135,31 +172,39 @@ class NetManager: public QObject {
 	private:
 		/**
 		 * Parses and evaluates incoming packets.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void parsePacket(Packet &p);
 
 		/**
 		 * Parses a sent chat message to the lobby.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void handleLobbyChatMessage(Packet &p);
 
 		/**
 		 * Parses a packet containing user statistics.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void handleStatistics(Packet &p);
 
 		/**
 		 * Parses a packet containing a user's profile data.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void handleUserProfileRequest(Packet &p);
+
+		/**
+		 * Parses a packet containing the user's friend list.
+		 * @param p The packet to parse.
+		 */
+		void handleFriendListRequest(Packet &p);
+
+		/**
+		 * Parses a packet containing the user's blocked list.
+		 * @param p The packet to parse.
+		 */
+		void handleBlockedListRequest(Packet &p);
 
 		/// Communications socket.
 		QTcpSocket *m_Socket;

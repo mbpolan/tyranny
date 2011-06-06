@@ -17,29 +17,49 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the client-server protocol.
+// settingsdialog.cpp: implementation of the SettingsDialog class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#include <QMessageBox>
 
-/// Authentication class packets
-#define AUTH_DATA			0xA0
-#define AUTH_SUCCESS		0xA1
-#define AUTH_ERROR		0xA2
-#define AUTH_LOGOUT		0xA3
-#define AUTH_REQUEST		0xA4
+#include "settingsdialog.h"
 
-/// General lobby actions
-#define LB_USERIN			0xB1
-#define LB_USEROUT		0xB2
-#define LB_CHATMESSAGE		0xB3
-#define LB_STATISTICS		0xB4
-#define LB_USERPROFILE_REQ	0xB5
-#define LB_USERPROFILE_UPD	0xB6
-#define LB_CHANGEPASSWORD	0xB7
-#define LB_FRIENDS_REQ		0xB8
-#define LB_FRIENDS_UPD		0xB9
-#define LB_BLOCKED_REQ		0xBA
-#define LB_BLOCKED_UPD		0xBB
+#include "ui/ui_settingsdialog.h"
 
-#endif
+SettingsDialog::SettingsDialog(QWidget *parent): QDialog(parent) {
+	ui=new Ui::SettingsDialog;
+	ui->setupUi(this);
+
+	// connect signals
+	connect(ui->changePasswordCB, SIGNAL(toggled(bool)), this, SLOT(onChangePasswordCB(bool)));
+}
+
+bool SettingsDialog::didChangePassword() const {
+	return ui->changePasswordCB->isChecked();
+}
+
+QString SettingsDialog::getNewPassword() const {
+	return ui->passwordEdit->text();
+}
+
+void SettingsDialog::onChangePasswordCB(bool toggled) {
+	ui->passwordEdit->setEnabled(toggled);
+	ui->verifyEdit->setEnabled(toggled);
+}
+
+void SettingsDialog::accept() {
+	// verify that both passwords match if the user requested a new password
+	if (ui->changePasswordCB->isChecked()) {
+		// disallow blank password
+		if (ui->passwordEdit->text()=="") {
+			QMessageBox::critical(this, tr("Error"), tr("Your password cannot be blank."), QMessageBox::Ok);
+			return;
+		}
+
+		else if (ui->passwordEdit->text()!=ui->verifyEdit->text()) {
+			QMessageBox::critical(this, tr("Error"), tr("Both passwords must match."), QMessageBox::Ok);
+			return;
+		}
+	}
+
+	QDialog::accept();
+}

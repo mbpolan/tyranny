@@ -17,29 +17,57 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the client-server protocol.
+// settingsdialog.h: definition of the SettingsDialog class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#ifndef SETTINGSDIALOG_H
+#define SETTINGSDIALOG_H
 
-/// Authentication class packets
-#define AUTH_DATA			0xA0
-#define AUTH_SUCCESS		0xA1
-#define AUTH_ERROR		0xA2
-#define AUTH_LOGOUT		0xA3
-#define AUTH_REQUEST		0xA4
+#include <QDialog>
 
-/// General lobby actions
-#define LB_USERIN			0xB1
-#define LB_USEROUT		0xB2
-#define LB_CHATMESSAGE		0xB3
-#define LB_STATISTICS		0xB4
-#define LB_USERPROFILE_REQ	0xB5
-#define LB_USERPROFILE_UPD	0xB6
-#define LB_CHANGEPASSWORD	0xB7
-#define LB_FRIENDS_REQ		0xB8
-#define LB_FRIENDS_UPD		0xB9
-#define LB_BLOCKED_REQ		0xBA
-#define LB_BLOCKED_UPD		0xBB
+namespace Ui {
+	class SettingsDialog;
+}
+
+/**
+ * A dialog for editing account settings.
+ * New passwords and other account related data can be edited by the user
+ * and this dialog presents them in a friendly way. The dialog also verifies
+ * that the new password the user wants has been verified by retyping.
+ */
+class SettingsDialog: public QDialog {
+	Q_OBJECT
+
+	public:
+		/**
+		 * Creates a new dialog for editing account settings.
+		 *
+		 * @param parent The parent widget for this dialog.
+		 */
+		SettingsDialog(QWidget *parent=NULL);
+
+		/**
+		 * Checks whether or not the user requested a new password.
+		 *
+		 * @return True if yes, false otherwise.
+		 */
+		bool didChangePassword() const;
+
+		/**
+		 * Returns the new password for the user.
+		 *
+		 * @return A new, verified password.
+		 */
+		QString getNewPassword() const;
+
+	private slots:
+		/// Handler for clicks on the "Change your password" check box.
+		void onChangePasswordCB(bool toggled);
+
+	public slots:
+		virtual void accept();
+
+	private:
+		Ui::SettingsDialog *ui;
+};
 
 #endif

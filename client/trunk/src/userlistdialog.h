@@ -17,29 +17,49 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the client-server protocol.
+// userlistdialog.h: definition of the UserListDialog class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#ifndef USERLISTDIALOG_H
+#define USERLISTDIALOG_H
 
-/// Authentication class packets
-#define AUTH_DATA			0xA0
-#define AUTH_SUCCESS		0xA1
-#define AUTH_ERROR		0xA2
-#define AUTH_LOGOUT		0xA3
-#define AUTH_REQUEST		0xA4
+#include <QDialog>
 
-/// General lobby actions
-#define LB_USERIN			0xB1
-#define LB_USEROUT		0xB2
-#define LB_CHATMESSAGE		0xB3
-#define LB_STATISTICS		0xB4
-#define LB_USERPROFILE_REQ	0xB5
-#define LB_USERPROFILE_UPD	0xB6
-#define LB_CHANGEPASSWORD	0xB7
-#define LB_FRIENDS_REQ		0xB8
-#define LB_FRIENDS_UPD		0xB9
-#define LB_BLOCKED_REQ		0xBA
-#define LB_BLOCKED_UPD		0xBB
+namespace Ui {
+	class UserListDialog;
+}
+
+/**
+ * A basic dialog that allows the programmer to display a list of strings.
+ * This multipurpose dialog can be used to show a list of usernames. It provides
+ * a button to remove entries from the list, effective for editing lists of blocked
+ * users or friends.
+ */
+class UserListDialog: public QDialog {
+	Q_OBJECT
+
+	public:
+		/**
+		 * Creates a dialog populated with the given usernames and title.
+		 *
+		 * @param title The title for the dialog.
+		 * @param usernames A list of usernames.
+		 * @param parent The parent widget for this dialog.
+		 */
+		UserListDialog(const QString &title, const QStringList &usernames, QWidget *parent=NULL);
+
+		/**
+		 * Returns the list of usernames in the dialog list.
+		 *
+		 * @return A list of usernames.
+		 */
+		QStringList getUserList() const;
+
+	private slots:
+		/// Handler for Remove button clicks
+		void onRemove();
+
+	private:
+		Ui::UserListDialog *ui;
+};
 
 #endif

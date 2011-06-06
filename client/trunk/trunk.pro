@@ -20,12 +20,16 @@ HEADERS += src/mainwindow.h \
     src/packet.h \
     src/protspec.h \
     src/statsdialog.h \
-    src/profiledialog.h
+    src/profiledialog.h \
+    src/settingsdialog.h \
+    src/userlistdialog.h
 FORMS += src/ui/mainwindow.ui \
     src/ui/prefdialog.ui \
     src/ui/authdialog.ui \
     src/ui/statsdialog.ui \
-    src/ui/profiledialog.ui
+    src/ui/profiledialog.ui \
+    src/ui/settingsdialog.ui \
+    src/ui/userlistdialog.ui
 SOURCES += src/client.cpp src/mainwindow.cpp \
     src/prefdialog.cpp \
     src/iohandler.cpp \
@@ -33,4 +37,6 @@ SOURCES += src/client.cpp src/mainwindow.cpp \
     src/netmanager.cpp \
     src/packet.cpp \
     src/statsdialog.cpp \
-    src/profiledialog.cpp
+    src/profiledialog.cpp \
+    src/settingsdialog.cpp \
+    src/userlistdialog.cpp

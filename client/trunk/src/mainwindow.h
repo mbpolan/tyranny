@@ -70,11 +70,20 @@ class MainWindow: public QMainWindow {
 		/// Handler for File -> Quit action.
 		void onQuit();
 
+		/// Handler for Game -> Manage Friends action.
+		void onManageFriends();
+
+		/// Handler for Game -> Blocked Users action.
+		void onBlockedUsers();
+
 		/// Handler for Account -> Edit Profile action.
 		void onEditProfile();
 
 		/// Handler for Account -> Statistics action.
 		void onStatistics();
+
+		/// Handler for Account -> Settings action.
+		void onSettings();
 
 		/// Handler for "Send" button clicks
 		void onSendButtonClicked();
@@ -111,6 +120,16 @@ class MainWindow: public QMainWindow {
 
 		/// Network handler for user profile information.
 		void onNetUserProfile(const QString &name, const QString &email, int age, const QString &bio);
+
+		/// Network handler for friend list response.
+		void onNetFriendList(const QStringList &list);
+
+		/// Network handler for blocked list response.
+		void onNetBlockedList(const QStringList &list);
+
+	protected:
+		/// Event handler for chat QLineEdit key presses
+		bool eventFilter(QObject *sender, QEvent *e);
 
 	private:
 		/**
