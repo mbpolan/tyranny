@@ -71,38 +71,53 @@ class Protocol {
 	private:
 		/**
 		 * Parses and evaluates a given packet.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void parsePacket(Packet &p);
 
 		/**
 		 * Handles a user sending a chat message.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void handleUserChatMessage(Packet &p);
 
 		/**
 		 * Handles gathering and sending a user his/her statistics.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void handleStatistics(Packet &p);
 
 		/**
 		 * Handles updating a user's profile data.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void handleUserProfileRequest(Packet &p);
 
 		/**
 		 * Handles updating a user's profile.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void handleUserProfileUpdate(Packet &p);
+
+		/**
+		 * Handles updating a user's password.
+		 * @param p The packet to parse.
+		 */
+		void handleChangePassword(Packet &p);
+
+		/**
+		 * Handles sending the client his/her list of friends or blocked users.
+		 * @param p The packet to parse.
+		 * @param blocked True for blocked list, false for friends list.
+		 */
+		void handleUserListRequest(Packet &p, bool blocked);
+
+		/**
+		 * Generic handler for updating either a friend list or blocked list.
+		 * @param p The packet to parse.
+		 * @param blocked True to update the blocked list, false for friends list.
+		 */
+		void handleUserListUpdate(Packet &p, bool blocked);
 
 		/// The user associated with this protocol.
 		User *m_User;
