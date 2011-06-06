@@ -19,6 +19,7 @@
  ***************************************************************************/
 // mainwindow.cpp: implementation of the MainWindow class
 
+#include <QKeyEvent>
 #include <QMessageBox>
 
 #include "authdialog.h"
@@ -26,7 +27,9 @@
 #include "mainwindow.h"
 #include "prefdialog.h"
 #include "profiledialog.h"
+#include "settingsdialog.h"
 #include "statsdialog.h"
+#include "userlistdialog.h"
 
 #include "ui/ui_mainwindow.h"
 
@@ -38,9 +41,15 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	connect(ui->actionConnect, SIGNAL(triggered()), this, SLOT(onConnect()));
 	connect(ui->actionDisconnect, SIGNAL(triggered()), this, SLOT(onDisconnect()));
 	connect(ui->actionPreferences, SIGNAL(triggered()), this, SLOT(onPreferences()));
+	connect(ui->actionManage_Friends, SIGNAL(triggered()), this, SLOT(onManageFriends()));
+	connect(ui->actionBlocked_Users, SIGNAL(triggered()), this, SLOT(onBlockedUsers()));
 	connect(ui->actionEdit_Profile, SIGNAL(triggered()), this, SLOT(onEditProfile()));
+	connect(ui->actionSettings, SIGNAL(triggered()), this, SLOT(onSettings()));
 	connect(ui->actionStatistics, SIGNAL(triggered()), this, SLOT(onStatistics()));
 	connect(ui->sendButton, SIGNAL(clicked()), this, SLOT(onSendButtonClicked()));
+
+	// install event filters
+	ui->chatEdit->installEventFilter(this);
 
 	// try to load the preferences file
 	QString ip;
@@ -88,6 +97,8 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(lobbyChatMessage(QString,QString)), this, SLOT(onNetLobbyChatMessage(QString,QString)));
 	connect(m_Network, SIGNAL(userProfile(QString,QString,int,QString)), this, SLOT(onNetUserProfile(QString,QString,int,QString)));
 	connect(m_Network, SIGNAL(userStatistics(int,int,int,int)), this, SLOT(onNetStatistics(int,int,int,int)));
+	connect(m_Network, SIGNAL(userFriendList(QStringList)), this, SLOT(onNetFriendList(QStringList)));
+	connect(m_Network, SIGNAL(userBlockedList(QStringList)), this, SLOT(onNetBlockedList(QStringList)));
 
 	m_Network->connectToServer(m_PrefData->getIP(), m_PrefData->getPort());
 }
@@ -116,6 +127,16 @@ void MainWindow::onQuit() {
 
 }
 
+void MainWindow::onManageFriends() {
+	// request the user's friend list
+	m_Network->requestFriendList();
+}
+
+void MainWindow::onBlockedUsers() {
+	// request the user's blocked user list
+	m_Network->requestBlockedList();
+}
+
 void MainWindow::onEditProfile() {
 	// request the user's profile data
 	m_Network->requestUserProfile();
@@ -126,10 +147,23 @@ void MainWindow::onStatistics() {
 	m_Network->requestStatistics();
 }
 
+void MainWindow::onSettings() {
+	// present the user with a settings editor dialog
+	SettingsDialog sd(this);
+	if (sd.exec()==QDialog::Accepted) {
+		if (sd.didChangePassword())
+			m_Network->sendPasswordChange(sd.getNewPassword());
+	}
+}
+
 void MainWindow::onSendButtonClicked() {
 	// check to see if the user entered any message
-	if (!ui->chatEdit->text().isEmpty())
+	if (!ui->chatEdit->text().isEmpty()) {
 		m_Network->sendChatMessage(ui->chatEdit->text());
+
+		// also clear the line edit
+		ui->chatEdit->clear();
+	}
 }
 
 void MainWindow::onNetConnected() {
@@ -219,6 +253,28 @@ void MainWindow::onNetStatistics(int points, int gamesPlayed, int won, int lost)
 	// show the statistics dialog
 	StatsDialog sd(points, gamesPlayed, won, lost, this);
 	sd.exec();
+}
+
+void MainWindow::onNetFriendList(const QStringList &list) {
+	UserListDialog ld("Friends", list, this);
+	if (ld.exec()==QDialog::Accepted)
+		m_Network->sendFriendListUpdate(ld.getUserList());
+}
+
+void MainWindow::onNetBlockedList(const QStringList &list) {
+	UserListDialog ld("Blocked Users", list, this);
+	if (ld.exec()==QDialog::Accepted)
+		m_Network->sendBlockedListUpdate(ld.getUserList());
+}
+
+bool MainWindow::eventFilter(QObject *sender, QEvent *e) {
+	if (sender==ui->chatEdit && e->type()==QEvent::KeyPress) {
+		QKeyEvent *ke=static_cast<QKeyEvent*>(e);
+		if (ke->key()==Qt::Key_Return)
+			onSendButtonClicked();
+	}
+
+	return QMainWindow::eventFilter(sender, e);
 }
 
 void MainWindow::toggleUi(bool connected) {

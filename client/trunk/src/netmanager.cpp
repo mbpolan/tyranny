@@ -19,6 +19,8 @@
  ***************************************************************************/
 // netmanager.cpp: implementation of the NetManager class.
 
+#include <QStringList>
+
 #include "netmanager.h"
 #include "protspec.h"
 
@@ -55,6 +57,42 @@ void NetManager::sendChatMessage(const QString &message) {
 	p.write(m_Socket);
 }
 
+void NetManager::requestFriendList() {
+	Packet p;
+	p.addByte(LB_FRIENDS_REQ);
+	p.write(m_Socket);
+}
+
+void NetManager::sendFriendListUpdate(const QStringList &list) {
+	Packet p;
+	p.addByte(LB_FRIENDS_UPD);
+	p.addUint16(list.size());
+
+	// add each username
+	for (int i=0; i<list.size(); i++)
+	    p.addString(list[i]);
+
+	p.write(m_Socket);
+}
+
+void NetManager::requestBlockedList() {
+	Packet p;
+	p.addByte(LB_BLOCKED_REQ);
+	p.write(m_Socket);
+}
+
+void NetManager::sendBlockedListUpdate(const QStringList &list) {
+	Packet p;
+	p.addByte(LB_BLOCKED_UPD);
+	p.addUint16(list.size());
+
+	// add each username
+	for (int i=0; i<list.size(); i++)
+		p.addString(list[i]);
+
+	p.write(m_Socket);
+}
+
 void NetManager::requestStatistics() {
 	Packet p;
 	p.addByte(LB_STATISTICS);
@@ -74,6 +112,13 @@ void NetManager::sendUserProfileUpdate(const QString &name, const QString &email
 	p.addString(email);
 	p.addUint16(age);
 	p.addString(bio);
+	p.write(m_Socket);
+}
+
+void NetManager::sendPasswordChange(const QString &password) {
+	Packet p;
+	p.addByte(LB_CHANGEPASSWORD);
+	p.addString(password);
 	p.write(m_Socket);
 }
 
@@ -108,6 +153,8 @@ void NetManager::parsePacket(Packet &p) {
 		case LB_CHATMESSAGE: handleLobbyChatMessage(p); break;
 		case LB_STATISTICS: handleStatistics(p); break;
 		case LB_USERPROFILE_REQ: handleUserProfileRequest(p); break;
+		case LB_FRIENDS_REQ: handleFriendListRequest(p); break;
+		case LB_BLOCKED_REQ: handleBlockedListRequest(p); break;
 
 		default: qDebug() << "*** WARNING *** : Unknown packet header: " << header; break;
 	}
@@ -139,4 +186,28 @@ void NetManager::handleUserProfileRequest(Packet &p) {
 	QString bio=p.string();
 
 	emit userProfile(name, email, age, bio);
+}
+
+void NetManager::handleFriendListRequest(Packet &p) {
+	// get the amount of usernames
+	int count=p.uint16();
+
+	// read each username
+	QStringList list;
+	for (int i=0; i<count; i++)
+	    list.append(p.string());
+
+	emit userFriendList(list);
+}
+
+void NetManager::handleBlockedListRequest(Packet &p) {
+    // get the amount of usernames
+    int count=p.uint16();
+
+    // read each username
+    QStringList list;
+    for (int i=0; i<count; i++)
+	  list.append(p.string());
+
+    emit userBlockedList(list);
 }
