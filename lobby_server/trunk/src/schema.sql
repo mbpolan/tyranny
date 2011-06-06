@@ -93,10 +93,10 @@ DROP TABLE IF EXISTS `tyranny_lobby`.`userlists` ;
 
 CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`userlists` (
   `uid` INT NOT NULL ,
-  `other_id` INT NULL ,
+  `other_id` INT NOT NULL ,
   `added` DATETIME NULL ,
   `blocked` TINYINT(1)  NULL ,
-  PRIMARY KEY (`uid`) ,
+  PRIMARY KEY (`uid`, `other_id`) ,
   INDEX `uid-friend_id` (`uid` ASC, `other_id` ASC) ,
   CONSTRAINT `uid-friend_id`
     FOREIGN KEY (`uid` , `other_id` )

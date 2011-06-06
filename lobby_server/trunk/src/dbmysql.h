@@ -23,6 +23,7 @@
 #define DBMYSQL_H
 
 #include <iostream>
+#include <vector>
 #include <mysql/mysql.h>
 
 #include "user.h"
@@ -128,6 +129,32 @@ class DBMySQL {
 		 * @param bio The user's biography.
 		 */
 		void updateUserProfile(const std::string &username, const std::string &name, const std::string &email, int &age, const std::string &bio) throw(DBMySQL::Exception);
+
+		/**
+		 * Updates a user's password with a new one.
+		 *
+		 * @param username The user whose password should be changed.
+		 * @param password The new password for the user.
+		 */
+		void updateUserPassword(const std::string &username, const std::string &password) throw(DBMySQL::Exception);
+
+		/**
+		 * Returns a user's friend list or blocked user list.
+		 *
+		 * @param username The user in question.
+		 * @param list A vector of usernames.
+		 * @param blocked True for blocked list, false for friends list.
+		 */
+		void getUserList(const std::string &username, std::vector<std::string> &list, bool blocked) throw(DBMySQL::Exception);
+
+		/**
+		 * Updates either a user's friend list or blocked user list.
+		 *
+		 * @param username The user for whom to update a friend list.
+		 * @param list The list of usernames.
+		 * @param blocked True to update blocked list, false for friends list.
+		 */
+		void updateUserList(const std::string &username, const std::vector<std::string> &list, bool blocked) throw(DBMySQL::Exception);
 
 	private:
 		/// The server address.

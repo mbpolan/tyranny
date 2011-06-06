@@ -80,7 +80,22 @@ void Protocol::parsePacket(Packet &p) {
 		// user sent an updated profile to be stored
 		case LB_USERPROFILE_UPD: handleUserProfileUpdate(p); break;
 
-		default: break;
+		// user requested a password change
+		case LB_CHANGEPASSWORD: handleChangePassword(p); break;
+
+		// user requested his friends list
+		case LB_FRIENDS_REQ: handleUserListRequest(p, false); break;
+
+		// user requested his/her blocked user list
+		case LB_BLOCKED_REQ: handleUserListRequest(p, true); break;
+
+		// user sent an updated friend list
+		case LB_FRIENDS_UPD: handleUserListUpdate(p, false); break;
+
+		// user sent an updated blocked user list
+		case LB_BLOCKED_UPD: handleUserListUpdate(p, true); break;
+
+		default: std::cout << "** Unknown packet header: " << header << std::endl;
 	}
 }
 
@@ -104,13 +119,13 @@ void Protocol::handleStatistics(Packet &p) {
 		db.disconnect();
 
 		// reply to the client
-		Packet p;
-		p.addByte(LB_STATISTICS);
-		p.addUint32(points);
-		p.addUint32(gamesPlayed);
-		p.addUint32(won);
-		p.addUint32(lost);
-		p.write(m_Socket);
+		Packet r;
+		r.addByte(LB_STATISTICS);
+		r.addUint32(points);
+		r.addUint32(gamesPlayed);
+		r.addUint32(won);
+		r.addUint32(lost);
+		r.write(m_Socket);
 	}
 
 	catch (const DBMySQL::Exception &ex) {
@@ -131,13 +146,13 @@ void Protocol::handleUserProfileRequest(Packet &p) {
 		db.disconnect();
 
 		// reply to the client
-		Packet p;
-		p.addByte(LB_USERPROFILE_REQ);
-		p.addString(name);
-		p.addString(email);
-		p.addUint16(age);
-		p.addString(bio);
-		p.write(m_Socket);
+		Packet r;
+		r.addByte(LB_USERPROFILE_REQ);
+		r.addString(name);
+		r.addString(email);
+		r.addUint16(age);
+		r.addString(bio);
+		r.write(m_Socket);
 	}
 
 	catch (const DBMySQL::Exception &ex) {
@@ -164,5 +179,79 @@ void Protocol::handleUserProfileUpdate(Packet &p) {
 
 	catch (const DBMySQL::Exception &ex) {
 		std::cout << "Unable to update user profile: " << ex.getMessage() << std::endl;
+	}
+}
+
+void Protocol::handleChangePassword(Packet &p) {
+	ConfigFile *cfg=ConfigFile::instance();
+
+	// get the new password for the user
+	std::string password=p.string();
+
+	try {
+		// connect to the database and update user's password
+		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
+		db.connect(cfg->getDBUser(), cfg->getDBPassword());
+		db.updateUserPassword(m_User->getUsername(), password);
+		db.disconnect();
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to update user profile: " << ex.getMessage() << std::endl;
+	}
+}
+
+void Protocol::handleUserListRequest(Packet &p, bool blocked) {
+	ConfigFile *cfg=ConfigFile::instance();
+
+	try {
+		std::vector<std::string> friends;
+
+		// connect to the database and get the user's friend list
+		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
+		db.connect(cfg->getDBUser(), cfg->getDBPassword());
+		db.getUserList(m_User->getUsername(), friends, blocked);
+		db.disconnect();
+
+		// reply with this data
+		Packet r;
+		r.addByte((blocked ? LB_BLOCKED_REQ : LB_FRIENDS_REQ));
+		r.addUint16(friends.size());
+
+		// add each username
+		for (int i=0; i<friends.size(); i++) {
+			std::string username=friends[i];
+			r.addString(username);
+		}
+
+		r.write(m_Socket);
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to update user profile: " << ex.getMessage() << std::endl;
+	}
+}
+
+void Protocol::handleUserListUpdate(Packet &p, bool blocked) {
+	ConfigFile *cfg=ConfigFile::instance();
+
+	// read the amount of usernames in the list
+	int count=p.uint16();
+
+	// read the usernames
+	std::vector<std::string> list;
+	for (int i=0; i<count; i++)
+		list.push_back(p.string());
+
+	try {
+		// connect to the database and get the user's blocked user list
+		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
+		db.connect(cfg->getDBUser(), cfg->getDBPassword());
+		db.updateUserList(m_User->getUsername(), list, blocked);
+		db.disconnect();
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to update user friend list: " << ex.getMessage() << std::endl;
 	}
 }
