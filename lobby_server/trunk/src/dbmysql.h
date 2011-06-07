@@ -50,6 +50,10 @@ class DBMySQL {
 		};
 
 	public:
+		/// Results encountered when a user tries to add someone to a list.
+		enum RequestResult { NoError, DuplicateEntry, UnknownUser };
+
+	public:
 		/**
 		 * Creates a new database connection object.
 		 *
@@ -76,7 +80,7 @@ class DBMySQL {
 		/**
 		 * Terminates the current connection with the database server.
 		 *
-		 * @throws An exception describing a disconnect problem.
+		 * @throws DBMySQL::Exception An exception describing a disconnect problem.
 		 */
 		void disconnect() throw(DBMySQL::Exception);
 
@@ -155,6 +159,16 @@ class DBMySQL {
 		 * @param blocked True to update blocked list, false for friends list.
 		 */
 		void updateUserList(const std::string &username, const std::vector<std::string> &list, bool blocked) throw(DBMySQL::Exception);
+
+		/**
+		 * Adds another user to the friends/blocked list of this user.
+		 *
+		 * @param username The user whose list should be modified.
+		 * @param other The username of the user to add.
+		 * @param blocked True to add to the blocked list, false for friends list.
+		 * @return An code describing the results of the add request.
+		 */
+		RequestResult addUserToList(const std::string &username, const std::string &other, bool blocked);
 
 	private:
 		/// The server address.

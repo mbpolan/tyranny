@@ -212,7 +212,7 @@ void DBMySQL::getUserList(const std::string &username, std::vector<std::string> 
 	if (!m_Handle)
 		throw DBMySQL::Exception("There is no current connection.");
 
-	std::string sql="select username from (select other_id as uid from userlists where uid=(select uid from users where username='"+username+"') AND blocked="+(blocked ? "1" : "0")+") as T natural join users";
+	std::string sql="SELECT username FROM (SELECT other_id AS uid FROM userlists WHERE uid=(SELECT uid FROM users WHERE username='"+username+"') AND blocked="+(blocked ? "1" : "0")+") AS T NATURAL JOIN users";
 
 	if (mysql_query(m_Handle, sql.c_str()))
 		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
@@ -270,4 +270,25 @@ void DBMySQL::updateUserList(const std::string &username, const std::vector<std:
 				throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
 		}
 	}
+}
+
+DBMySQL::RequestResult DBMySQL::addUserToList(const std::string &username, const std::string &other, bool blocked) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// form the sql string
+	std::string sql="INSERT INTO userlists VALUES((SELECT uid FROM users WHERE username='"+username+"'),";
+	sql+=" (SELECT uid FROM users WHERE username='"+other+"'), NOW(), "+(blocked ? "1" : "0")+")";
+
+	// query the server
+	if (mysql_query(m_Handle, sql.c_str())) {
+		// determine what when wrong
+		std::string error=std::string(mysql_error(m_Handle));
+		if (error.find("Duplicate")!=-1)
+			return DBMySQL::DuplicateEntry;
+		else
+			throw DBMySQL::Exception("Unable to complete database query: "+error);
+	}
+
+	return DBMySQL::NoError;
 }
