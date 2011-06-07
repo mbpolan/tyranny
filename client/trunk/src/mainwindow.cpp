@@ -69,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 
 	// set some defaults
 	m_Network=NULL;
+	m_LoggedInUser="";
 
 	// toggle the interface initially
 	toggleUi(false);
@@ -96,7 +97,7 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(networkError(QString)), this, SLOT(onNetError(QString)));
 	connect(m_Network, SIGNAL(statusMessage(QString)), this, SLOT(onNetMessage(QString)));
 	connect(m_Network, SIGNAL(requireAuthentication()), this, SLOT(onNetAuthenticate()));
-	connect(m_Network, SIGNAL(userLoggedIn(QString)), this, SLOT(onNetUserLoggedIn(QString)));
+	connect(m_Network, SIGNAL(userLoggedIn(QString,NetManager::UserStatus)), this, SLOT(onNetUserLoggedIn(QString,NetManager::UserStatus)));
 	connect(m_Network, SIGNAL(userLoggedOut(QString)), this, SLOT(onNetUserLoggedOut(QString)));
 	connect(m_Network, SIGNAL(lobbyChatMessage(QString,QString)), this, SLOT(onNetLobbyChatMessage(QString,QString)));
 	connect(m_Network, SIGNAL(userProfile(QString,QString,int,QString)), this, SLOT(onNetUserProfile(QString,QString,int,QString)));
@@ -191,11 +192,22 @@ void MainWindow::onUserListContextMenu(const QPoint &pos) {
 		// get the target username
 		QString username=item->text(0);
 
-		// and request the action
-		if (result==friendAct)
+		// request the action and style the list item
+		if (result==friendAct) {
 			m_Network->sendUserRequest(username, NetManager::FriendRequest);
-		else
+
+			QBrush b;
+			b.setColor(Qt::darkGreen);
+			item->setForeground(0, b);
+		}
+
+		else {
 			m_Network->sendUserRequest(username, NetManager::BlockRequest);
+
+			QBrush b;
+			b.setColor(Qt::darkRed);
+			item->setForeground(0, b);
+		}
 	}
 }
 
@@ -242,11 +254,30 @@ void MainWindow::onNetMessage(const QString &msg) {
 	ui->statusbar->showMessage(msg);
 }
 
-void MainWindow::onNetUserLoggedIn(const QString &username) {
+void MainWindow::onNetUserLoggedIn(const QString &username, const NetManager::UserStatus &status) {
 	// create a new item for this user
 	QTreeWidgetItem *item=new QTreeWidgetItem(ui->userList);
 	item->setText(0, username);
 	item->setText(1, "0");
+
+	// style the text if needed
+	if (status==NetManager::UserFriend) {
+		QBrush b;
+		b.setColor(Qt::darkGreen);
+		item->setForeground(0, b);
+	}
+
+	else if (status==NetManager::UserBlocked) {
+		QBrush b;
+		b.setColor(Qt::darkRed);
+		item->setForeground(0, b);
+	}
+
+	// store the username
+	m_LoggedInUser=username;
+
+	// also update the window title
+	setWindowTitle("Tyranny Client - Logged in as "+username);
 }
 
 void MainWindow::onNetUserLoggedOut(const QString &username) {
@@ -286,14 +317,64 @@ void MainWindow::onNetStatistics(int points, int gamesPlayed, int won, int lost)
 
 void MainWindow::onNetFriendList(const QStringList &list) {
 	UserListDialog ld("Friends", list, this);
-	if (ld.exec()==QDialog::Accepted)
+	if (ld.exec()==QDialog::Accepted) {
 		m_Network->sendFriendListUpdate(ld.getUserList());
+
+		// make sure to style the user list with this new friend list
+		for (int i=0; i<ui->userList->topLevelItemCount(); i++) {
+			QTreeWidgetItem *item=ui->userList->topLevelItem(i);
+
+			// don't modify blocked users
+			QBrush color=item->foreground(0);
+			if (color.color()==Qt::darkRed)
+				continue;
+
+			// see if this user is now listed as a friend
+			QString username=item->text(0);
+			if (ld.getUserList().contains(username)) {
+				QBrush b;
+				b.setColor(Qt::darkGreen);
+				item->setForeground(0, b);
+			}
+
+			else {
+				QBrush b;
+				b.setColor(Qt::black);
+				item->setForeground(0, b);
+			}
+		}
+	}
 }
 
 void MainWindow::onNetBlockedList(const QStringList &list) {
 	UserListDialog ld("Blocked Users", list, this);
-	if (ld.exec()==QDialog::Accepted)
+	if (ld.exec()==QDialog::Accepted) {
 		m_Network->sendBlockedListUpdate(ld.getUserList());
+
+		// make sure to style the user list with this new friend list
+		for (int i=0; i<ui->userList->topLevelItemCount(); i++) {
+			QTreeWidgetItem *item=ui->userList->topLevelItem(i);
+
+			// don't modify friends
+			QBrush color=item->foreground(0);
+			if (color.color()==Qt::darkGreen)
+				continue;
+
+			// see if this user is now listed as a friend
+			QString username=item->text(0);
+			if (ld.getUserList().contains(username)) {
+				QBrush b;
+				b.setColor(Qt::darkRed);
+				item->setForeground(0, b);
+			}
+
+			else {
+				QBrush b;
+				b.setColor(Qt::black);
+				item->setForeground(0, b);
+			}
+		}
+	}
 }
 
 void MainWindow::onNetInfoMessage(const QString &msg) {

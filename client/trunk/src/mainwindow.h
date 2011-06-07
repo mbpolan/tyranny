@@ -107,7 +107,7 @@ class MainWindow: public QMainWindow {
 		void onNetMessage(const QString &msg);
 
 		/// Network handler for when another user logs in.
-		void onNetUserLoggedIn(const QString &username);
+		void onNetUserLoggedIn(const QString &username, const NetManager::UserStatus &status);
 
 		/// Network handler for when another user logs out.
 		void onNetUserLoggedOut(const QString &username);
@@ -153,6 +153,9 @@ class MainWindow: public QMainWindow {
 
 		/// Network manager object.
 		NetManager *m_Network;
+
+		/// The username of the currently logged in user.
+		QString m_LoggedInUser;
 };
 
 #endif

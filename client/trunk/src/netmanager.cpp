@@ -156,7 +156,7 @@ void NetManager::parsePacket(Packet &p) {
 		case AUTH_ERROR: emit serverError(p.string()); break;
 		case AUTH_SUCCESS: emit statusMessage("Welcome to "+p.string()); break;
 
-		case LB_USERIN: emit userLoggedIn(p.string()); break;
+		case LB_USERIN: handleUserLoggedIn(p); break;
 		case LB_USEROUT: emit userLoggedOut(p.string()); break;
 		case LB_CHATMESSAGE: handleLobbyChatMessage(p); break;
 		case LB_STATISTICS: handleStatistics(p); break;
@@ -169,6 +169,24 @@ void NetManager::parsePacket(Packet &p) {
 
 		default: qDebug() << "*** WARNING *** : Unknown packet header: " << header; break;
 	}
+}
+
+void NetManager::handleUserLoggedIn(Packet &p) {
+	// get the username
+	QString username=p.string();
+
+	// get the user's status
+	char status=p.byte();
+
+	// translate the status into an enum
+	NetManager::UserStatus st;
+	switch(status) {
+		default: st=NetManager::UserNone; break;
+		case USER_BLOCKED: st=NetManager::UserBlocked; break;
+		case USER_FRIEND: st=NetManager::UserFriend; break;
+	}
+
+	emit userLoggedIn(username, st);
 }
 
 void NetManager::handleLobbyChatMessage(Packet &p) {

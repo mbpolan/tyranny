@@ -40,6 +40,8 @@ class NetManager: public QObject {
 	public:
 		enum UserRequest { FriendRequest, BlockRequest };
 
+		enum UserStatus { UserNone, UserFriend, UserBlocked };
+
 	public:
 		/**
 		 * Default constructor.
@@ -150,7 +152,7 @@ class NetManager: public QObject {
 		void statusMessage(const QString &msg);
 
 		/// Signal emitted when another user logs into the lobby.
-		void userLoggedIn(const QString &username);
+		void userLoggedIn(const QString &username, const NetManager::UserStatus &status);
 
 		/// Signal emitted when another user logs out of the lobby.
 		void userLoggedOut(const QString &username);
@@ -189,6 +191,12 @@ class NetManager: public QObject {
 		 * @param p The packet to parse.
 		 */
 		void parsePacket(Packet &p);
+
+		/**
+		 * Parses a packet containing data about a user who logged in.
+		 * @param p The packet to parse.
+		 */
+		void handleUserLoggedIn(Packet &p);
 
 		/**
 		 * Parses a sent chat message to the lobby.
