@@ -19,6 +19,7 @@
  ***************************************************************************/
 // usermanager.cpp: implementation of the UserManager class.
 
+#include "dbmysql.h"
 #include "usermanager.h"
 
 // global instance of the user manager
@@ -47,11 +48,39 @@ void UserManager::addUser(User *user) {
 	// now let all the other users know that this user has logged in
 	for (std::map<std::string, User*>::iterator it=m_UserMap.begin(); it!=m_UserMap.end(); ++it) {
 		User *other=(*it).second;
-		other->getProtocol()->sendUserLoggedIn(user);
 
-		// also update the logged in user with the current users online now
-		if (other!=user)
+		// check if this other user is being blocked by the newly logged in user
+		bool ignore=false;
+		for (int i=0; i<user->getBlockedList().size(); i++) {
+			if (user->getBlockedList()[i]==other->getUsername())
+				ignore=true;
+		}
+
+		// ignore the other user is not being blocked, inform him that we just logged in
+		if (!ignore)
+			other->getProtocol()->sendUserLoggedIn(user);
+
+		// now check if the other user is blocking THIS user
+		ignore=false;
+		for (int i=0; i<other->getBlockedList().size(); i++) {
+			if (other->getBlockedList()[i]==user->getUsername())
+				ignore=true;
+		}
+
+		// finally if we are not being blocked, inform us that this other user is online
+		if (other!=user && !ignore)
 			user->getProtocol()->sendUserLoggedIn(other);
+	}
+
+	// flag the user as online
+	try {
+		pDBMySQL db=DBMySQL::synthesize();
+		db->flagUserOnline(user->getUsername(), true);
+		db->disconnect();
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to flag user as online: " << ex.getMessage() << std::endl;
 	}
 
 	pthread_mutex_unlock(&m_Mutex);
@@ -69,15 +98,61 @@ void UserManager::removeUser(User *user) {
 		other->getProtocol()->sendUserLoggedOut(user);
 	}
 
+	// flag the user as offline
+	try {
+		pDBMySQL db=DBMySQL::synthesize();
+		db->flagUserOnline(user->getUsername(), false);
+		db->disconnect();
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to flag user as online: " << ex.getMessage() << std::endl;
+	}
+
 	pthread_mutex_unlock(&m_Mutex);
 }
 
 void UserManager::broadcastChatMessage(const std::string &user, const std::string &message) {
 	pthread_mutex_lock(&m_Mutex);
 
+	User *sender=m_UserMap[user];
+
 	for (std::map<std::string, User*>::iterator it=m_UserMap.begin(); it!=m_UserMap.end(); ++it) {
 		User *other=(*it).second;
-		other->getProtocol()->sendChatMessage(user, message);
+
+		// if this user is on the target user's blocked list, don't sent him the chat message
+		bool ignore=false;
+		for (int i=0; i<other->getBlockedList().size(); i++) {
+			// make sure the other user is not blocking the sender
+			if (other->getBlockedList()[i]==user)
+				ignore=true;
+		}
+
+		// if the sender is blocking the recipient, don't send him the message either
+		for (int i=0; i<sender->getBlockedList().size(); i++) {
+			if (sender->getBlockedList()[i]==other->getUsername())
+				ignore=true;
+		}
+
+		// if all checks out, send the recepient the chat message
+		if (!ignore)
+			other->getProtocol()->sendChatMessage(user, message);
+	}
+
+	pthread_mutex_unlock(&m_Mutex);
+}
+
+void UserManager::sendUserStatusUpdate(const std::string &user, const std::string &target, bool online) {
+	pthread_mutex_lock(&m_Mutex);
+
+	// see if the user is online at this point
+	User *toWhom=m_UserMap[user];
+	User *targetUser=m_UserMap[target];
+	if (toWhom && targetUser) {
+		if (online)
+			toWhom->getProtocol()->sendUserLoggedIn(targetUser);
+		else
+			toWhom->getProtocol()->sendUserLoggedOut(targetUser);
 	}
 
 	pthread_mutex_unlock(&m_Mutex);

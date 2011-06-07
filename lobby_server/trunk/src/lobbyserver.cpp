@@ -127,6 +127,10 @@ int main(int argc, char *argv[]) {
 	std::cout << "Loading configuration file...\t";
 	try {
 		g_ConfigFile->parse();
+
+		// cache database data
+		DBMySQL::cache(g_ConfigFile->getDBHost(), g_ConfigFile->getDBPort(), g_ConfigFile->getDBName(),
+					   g_ConfigFile->getDBUser(), g_ConfigFile->getDBPassword());
 	}
 
 	catch (const ConfigFile::Exception &ex) {

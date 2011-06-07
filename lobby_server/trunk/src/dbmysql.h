@@ -22,11 +22,16 @@
 #ifndef DBMYSQL_H
 #define DBMYSQL_H
 
+#include <memory>
 #include <iostream>
 #include <vector>
 #include <mysql/mysql.h>
 
 #include "user.h"
+
+class DBMySQL;
+
+typedef std::auto_ptr<DBMySQL> pDBMySQL;
 
 class DBMySQL {
 	public:
@@ -69,6 +74,25 @@ class DBMySQL {
 		~DBMySQL();
 
 		/**
+		 * Caches connection and login information to quickly create new database handles.
+		 *
+		 * @param host The database server.
+		 * @param port The database port.
+		 * @param db The database name.
+		 * @param user The database account username.
+		 * @param password The database account password.
+		 */
+		static void cache(const std::string &host, int port, const std::string &db, const std::string &user, const std::string &password);
+
+		/**
+		 * Creates a new handle using cache data.
+		 * Make sure to call cache() beforehand, otherwise this method will throw an exception.
+		 *
+		 * @return A ready-to-use database handle.
+		 */
+		static pDBMySQL synthesize() throw(DBMySQL::Exception);
+
+		/**
 		 * Connects to the database server and attempts to login with the given information.
 		 *
 		 * @param user The username.
@@ -100,6 +124,14 @@ class DBMySQL {
 		 * @throw An exception if an error occurred.
 		 */
 		void loadUser(User *user) throw(DBMySQL::Exception);
+
+		/**
+		 * Flags a user as either online or offline.
+		 *
+		 * @param username The user to flag.
+		 * @param online True for online, false for offline.
+		 */
+		void flagUserOnline(const std::string &username, bool online) throw(DBMySQL::Exception);
 
 		/**
 		 * Returns the user's game statistics as recorded in the database.
