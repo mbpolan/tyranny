@@ -22,6 +22,11 @@
 #ifndef PROTSPEC_H
 #define PROTSPEC_H
 
+/// User statuses.
+#define USER_NONE			0x00
+#define USER_BLOCKED		0x01
+#define USER_FRIEND		0x02
+
 /// Types of user requests.
 #define REQ_FRIENDS		0x01
 #define REQ_BLOCKED		0x02

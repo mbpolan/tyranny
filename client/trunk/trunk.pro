@@ -29,7 +29,8 @@ FORMS += src/ui/mainwindow.ui \
     src/ui/statsdialog.ui \
     src/ui/profiledialog.ui \
     src/ui/settingsdialog.ui \
-    src/ui/userlistdialog.ui
+    src/ui/userlistdialog.ui \
+    src/ui/rulesdialog.ui
 SOURCES += src/client.cpp src/mainwindow.cpp \
     src/prefdialog.cpp \
     src/iohandler.cpp \
