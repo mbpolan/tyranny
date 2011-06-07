@@ -20,6 +20,7 @@
 // mainwindow.cpp: implementation of the MainWindow class
 
 #include <QKeyEvent>
+#include <QMenu>
 #include <QMessageBox>
 
 #include "authdialog.h"
@@ -47,6 +48,10 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	connect(ui->actionSettings, SIGNAL(triggered()), this, SLOT(onSettings()));
 	connect(ui->actionStatistics, SIGNAL(triggered()), this, SLOT(onStatistics()));
 	connect(ui->sendButton, SIGNAL(clicked()), this, SLOT(onSendButtonClicked()));
+	connect(ui->userList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onUserListContextMenu(QPoint)));
+
+	// set policies
+	ui->userList->setContextMenuPolicy(Qt::CustomContextMenu);
 
 	// install event filters
 	ui->chatEdit->installEventFilter(this);
@@ -89,8 +94,7 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(connected()), this, SLOT(onNetConnected()));
 	connect(m_Network, SIGNAL(disconnected()), this, SLOT(onNetDisconnected()));
 	connect(m_Network, SIGNAL(networkError(QString)), this, SLOT(onNetError(QString)));
-	connect(m_Network, SIGNAL(criticalError(QString)), this, SLOT(onNetCriticalError(QString)));
-	connect(m_Network, SIGNAL(networkMessage(QString)), this, SLOT(onNetMessage(QString)));
+	connect(m_Network, SIGNAL(statusMessage(QString)), this, SLOT(onNetMessage(QString)));
 	connect(m_Network, SIGNAL(requireAuthentication()), this, SLOT(onNetAuthenticate()));
 	connect(m_Network, SIGNAL(userLoggedIn(QString)), this, SLOT(onNetUserLoggedIn(QString)));
 	connect(m_Network, SIGNAL(userLoggedOut(QString)), this, SLOT(onNetUserLoggedOut(QString)));
@@ -99,6 +103,8 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(userStatistics(int,int,int,int)), this, SLOT(onNetStatistics(int,int,int,int)));
 	connect(m_Network, SIGNAL(userFriendList(QStringList)), this, SLOT(onNetFriendList(QStringList)));
 	connect(m_Network, SIGNAL(userBlockedList(QStringList)), this, SLOT(onNetBlockedList(QStringList)));
+	connect(m_Network, SIGNAL(serverInfo(QString)), this, SLOT(onNetInfoMessage(QString)));
+	connect(m_Network, SIGNAL(serverError(QString)), this, SLOT(onNetErrorMessage(QString)));
 
 	m_Network->connectToServer(m_PrefData->getIP(), m_PrefData->getPort());
 }
@@ -124,7 +130,7 @@ void MainWindow::onPreferences() {
 }
 
 void MainWindow::onQuit() {
-
+	qApp->quit();
 }
 
 void MainWindow::onManageFriends() {
@@ -166,6 +172,33 @@ void MainWindow::onSendButtonClicked() {
 	}
 }
 
+void MainWindow::onUserListContextMenu(const QPoint &pos) {
+	// create some actions and toggle them
+	QAction *friendAct=new QAction(tr("Add as Friend"), this);
+	QAction *blockAct=new QAction(tr("Block User"), this);
+
+	// see if a user is selected
+	QTreeWidgetItem *item=ui->userList->currentItem();
+	friendAct->setEnabled((item!=NULL));
+	blockAct->setEnabled((item!=NULL));
+
+	QMenu context(tr("Context Menu"), this);
+	context.addAction(friendAct);
+	context.addAction(blockAct);
+
+	QAction *result;
+	if ((result=context.exec(mapToGlobal(pos))) && item) {
+		// get the target username
+		QString username=item->text(0);
+
+		// and request the action
+		if (result==friendAct)
+			m_Network->sendUserRequest(username, NetManager::FriendRequest);
+		else
+			m_Network->sendUserRequest(username, NetManager::BlockRequest);
+	}
+}
+
 void MainWindow::onNetConnected() {
 	ui->statusbar->showMessage(tr("Connected."));
 
@@ -202,11 +235,7 @@ void MainWindow::onNetAuthenticate() {
 }
 
 void MainWindow::onNetError(const QString &error) {
-	ui->statusbar->showMessage(error);
-}
-
-void MainWindow::onNetCriticalError(const QString &error) {
-    QMessageBox::critical(this, tr("Error"), error, QMessageBox::Ok, QMessageBox::NoButton);
+	ui->statusbar->showMessage(QString("*** ")+error);
 }
 
 void MainWindow::onNetMessage(const QString &msg) {
@@ -265,6 +294,14 @@ void MainWindow::onNetBlockedList(const QStringList &list) {
 	UserListDialog ld("Blocked Users", list, this);
 	if (ld.exec()==QDialog::Accepted)
 		m_Network->sendBlockedListUpdate(ld.getUserList());
+}
+
+void MainWindow::onNetInfoMessage(const QString &msg) {
+	QMessageBox::information(this, tr("Information"), msg, QMessageBox::Ok, QMessageBox::NoButton);
+}
+
+void MainWindow::onNetErrorMessage(const QString &msg) {
+	QMessageBox::critical(this, tr("Error"), msg, QMessageBox::Ok, QMessageBox::NoButton);
 }
 
 bool MainWindow::eventFilter(QObject *sender, QEvent *e) {
