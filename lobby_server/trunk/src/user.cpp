@@ -26,3 +26,21 @@ User::User(const std::string &username, const std::string &password) {
 	m_Password=password;
 	m_Protocol=NULL;
 }
+
+bool User::isFriendsWith(const std::string &username) const {
+	for (int i=0; i<m_Friends.size(); i++) {
+		if (m_Friends[i]==username)
+			return true;
+	}
+
+	return false;
+}
+
+bool User::isBlocking(const std::string &username) const {
+	for (int i=0; i<m_Blocked.size(); i++) {
+		if (m_Blocked[i]==username)
+			return true;
+	}
+
+	return false;
+}

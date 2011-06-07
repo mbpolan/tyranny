@@ -129,6 +129,22 @@ class User {
 		 */
 		std::vector<std::string> getBlockedList() const { return m_Blocked; }
 
+		/**
+		 * Convenience method to determine if this user is friends with another.
+		 *
+		 * @param other The user in question.
+		 * @return True if this user as the other as a friend, false otherwise.
+		 */
+		bool isFriendsWith(const std::string &username) const;
+
+		/**
+		 * Convenience method to determine if this user is blocking another.
+		 *
+		 * @param other The user in question.
+		 * @return True if this user is blocking the other, false otherwise.
+		 */
+		bool isBlocking(const std::string &username) const;
+
 	private:
 		/// The user's username.
 		std::string m_Username;

@@ -43,10 +43,18 @@ void Protocol::communicationLoop() {
 	} while(res!=Packet::DataCorrupt && res!=Packet::Disconnected);
 }
 
-void Protocol::sendUserLoggedIn(User *other) {
+void Protocol::sendUserLoggedIn(User *other, const Protocol::UserStatus &status) {
 	Packet p;
 	p.addByte(LB_USERIN);
 	p.addString(other->getUsername());
+
+	switch(status) {
+		default: p.addByte(USER_NONE); break;
+
+		case Protocol::UserBlocked: p.addByte(USER_BLOCKED); break;
+		case Protocol::UserFriend: p.addByte(USER_FRIEND); break;
+	}
+
 	p.write(m_Socket);
 }
 
