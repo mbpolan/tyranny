@@ -119,6 +119,13 @@ class Protocol {
 		 */
 		void handleUserListUpdate(Packet &p, bool blocked);
 
+		/**
+		 * Handler for adding users to friends/blocked lists.
+		 *
+		 * @param p The packet to parse.
+		 */
+		void handleUserRequest(Packet &p);
+
 		/// The user associated with this protocol.
 		User *m_User;
 

@@ -95,7 +95,10 @@ void Protocol::parsePacket(Packet &p) {
 		// user sent an updated blocked user list
 		case LB_BLOCKED_UPD: handleUserListUpdate(p, true); break;
 
-		default: std::cout << "** Unknown packet header: " << header << std::endl;
+		// user sent a request to add another user to friends/blocked list
+		case LB_USERREQUEST: handleUserRequest(p); break;
+
+		default: std::cout << "** Unknown packet header: " << header << std::endl; break;
 	}
 }
 
@@ -249,6 +252,57 @@ void Protocol::handleUserListUpdate(Packet &p, bool blocked) {
 		db.connect(cfg->getDBUser(), cfg->getDBPassword());
 		db.updateUserList(m_User->getUsername(), list, blocked);
 		db.disconnect();
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to update user friend list: " << ex.getMessage() << std::endl;
+	}
+}
+
+void Protocol::handleUserRequest(Packet &p) {
+	ConfigFile *cfg=ConfigFile::instance();
+
+	// read the user and list target
+	std::string username=p.string();
+	char list=p.byte();
+
+	// verify the user isn't trying to add himself
+	if (username==m_User->getUsername()) {
+		Packet r;
+		r.addByte(MSG_ERROR);
+		r.addString("You cannot add yourself to a friend or blocked list.");
+		r.write(m_Socket);
+
+		return;
+	}
+
+	try {
+		// connect to the database and add the user to the list
+		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
+		db.connect(cfg->getDBUser(), cfg->getDBPassword());
+		DBMySQL::RequestResult res=db.addUserToList(m_User->getUsername(), username, (list==REQ_FRIENDS ? false : true));
+		db.disconnect();
+
+		// determine the results
+		if (res==DBMySQL::NoError) {
+			std::string msg="Successfully added user to ";
+			if (list==REQ_FRIENDS)
+				msg+="friends list.";
+			else
+				msg+="blocked list.";
+
+			Packet r;
+			r.addByte(MSG_INFO);
+			r.addString(msg);
+			r.write(m_Socket);
+		}
+
+		else if (res==DBMySQL::DuplicateEntry) {
+			Packet r;
+			r.addByte(MSG_ERROR);
+			r.addString("The given user already exists in one of your lists.");
+			r.write(m_Socket);
+		}
 	}
 
 	catch (const DBMySQL::Exception &ex) {

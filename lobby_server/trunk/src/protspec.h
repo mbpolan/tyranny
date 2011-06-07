@@ -22,6 +22,12 @@
 #ifndef PROTSPEC_H
 #define PROTSPEC_H
 
+/// Types of user requests and results.
+#define REQ_FRIENDS			0x01
+#define REQ_BLOCKED			0x02
+#define REQ_SUCCESS			0x03
+#define REQ_ERROR			0x04
+
 /// Authentication class packets
 #define AUTH_DATA			0xA0
 #define AUTH_SUCCESS		0xA1
@@ -41,5 +47,10 @@
 #define LB_FRIENDS_UPD		0xB9
 #define LB_BLOCKED_REQ		0xBA
 #define LB_BLOCKED_UPD		0xBB
+#define LB_USERREQUEST		0xBC
+
+/// Server messages
+#define MSG_INFO			0xE1
+#define MSG_ERROR			0xE2
 
 #endif
