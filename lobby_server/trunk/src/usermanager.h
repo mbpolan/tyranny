@@ -68,6 +68,15 @@ class UserManager {
 		 */
 		void broadcastChatMessage(const std::string &user, const std::string &message);
 
+		/**
+		 * Sends the target user a status update about another use.
+		 *
+		 * @param user The user to whom a status update should be sent to.
+		 * @param target The user whose status we are concerned about.
+		 * @param online True if the target is online, false otherwise.
+		 */
+		void sendUserStatusUpdate(const std::string &user, const std::string &target, bool online);
+
 	private:
 		/// Map of users, hashed according to their usernames.
 		std::map<std::string, User*> m_UserMap;

@@ -111,15 +111,13 @@ void Protocol::handleUserChatMessage(Packet &p) {
 }
 
 void Protocol::handleStatistics(Packet &p) {
-	ConfigFile *cfg=ConfigFile::instance();
 	int points, gamesPlayed, won, lost;
 
 	try {
 		// connect to the database and get the statistics
-		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
-		db.connect(cfg->getDBUser(), cfg->getDBPassword());
-		db.getUserStatistics(m_User->getUsername(), points, gamesPlayed, won, lost);
-		db.disconnect();
+		pDBMySQL db=DBMySQL::synthesize();
+		db->getUserStatistics(m_User->getUsername(), points, gamesPlayed, won, lost);
+		db->disconnect();
 
 		// reply to the client
 		Packet r;
@@ -137,16 +135,14 @@ void Protocol::handleStatistics(Packet &p) {
 }
 
 void Protocol::handleUserProfileRequest(Packet &p) {
-	ConfigFile *cfg=ConfigFile::instance();
 	std::string name, email, bio;
 	int age;
 
 	try {
 		// connect to the database and get the profile data
-		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
-		db.connect(cfg->getDBUser(), cfg->getDBPassword());
-		db.getUserProfile(m_User->getUsername(), name, email, age, bio);
-		db.disconnect();
+		pDBMySQL db=DBMySQL::synthesize();
+		db->getUserProfile(m_User->getUsername(), name, email, age, bio);
+		db->disconnect();
 
 		// reply to the client
 		Packet r;
@@ -164,8 +160,6 @@ void Protocol::handleUserProfileRequest(Packet &p) {
 }
 
 void Protocol::handleUserProfileUpdate(Packet &p) {
-	ConfigFile *cfg=ConfigFile::instance();
-
 	// cache the packet data
 	std::string name=p.string();
 	std::string email=p.string();
@@ -174,10 +168,9 @@ void Protocol::handleUserProfileUpdate(Packet &p) {
 
 	try {
 		// connect to the database and update the profile data
-		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
-		db.connect(cfg->getDBUser(), cfg->getDBPassword());
-		db.updateUserProfile(m_User->getUsername(), name, email, age, bio);
-		db.disconnect();
+		pDBMySQL db=DBMySQL::synthesize();
+		db->updateUserProfile(m_User->getUsername(), name, email, age, bio);
+		db->disconnect();
 	}
 
 	catch (const DBMySQL::Exception &ex) {
@@ -186,17 +179,14 @@ void Protocol::handleUserProfileUpdate(Packet &p) {
 }
 
 void Protocol::handleChangePassword(Packet &p) {
-	ConfigFile *cfg=ConfigFile::instance();
-
 	// get the new password for the user
 	std::string password=p.string();
 
 	try {
 		// connect to the database and update user's password
-		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
-		db.connect(cfg->getDBUser(), cfg->getDBPassword());
-		db.updateUserPassword(m_User->getUsername(), password);
-		db.disconnect();
+		pDBMySQL db=DBMySQL::synthesize();
+		db->updateUserPassword(m_User->getUsername(), password);
+		db->disconnect();
 	}
 
 	catch (const DBMySQL::Exception &ex) {
@@ -205,16 +195,13 @@ void Protocol::handleChangePassword(Packet &p) {
 }
 
 void Protocol::handleUserListRequest(Packet &p, bool blocked) {
-	ConfigFile *cfg=ConfigFile::instance();
-
 	try {
 		std::vector<std::string> friends;
 
 		// connect to the database and get the user's friend list
-		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
-		db.connect(cfg->getDBUser(), cfg->getDBPassword());
-		db.getUserList(m_User->getUsername(), friends, blocked);
-		db.disconnect();
+		pDBMySQL db=DBMySQL::synthesize();
+		db->getUserList(m_User->getUsername(), friends, blocked);
+		db->disconnect();
 
 		// reply with this data
 		Packet r;
@@ -236,8 +223,6 @@ void Protocol::handleUserListRequest(Packet &p, bool blocked) {
 }
 
 void Protocol::handleUserListUpdate(Packet &p, bool blocked) {
-	ConfigFile *cfg=ConfigFile::instance();
-
 	// read the amount of usernames in the list
 	int count=p.uint16();
 
@@ -247,11 +232,34 @@ void Protocol::handleUserListUpdate(Packet &p, bool blocked) {
 		list.push_back(p.string());
 
 	try {
-		// connect to the database and get the user's blocked user list
-		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
-		db.connect(cfg->getDBUser(), cfg->getDBPassword());
-		db.updateUserList(m_User->getUsername(), list, blocked);
-		db.disconnect();
+		// connect to the database and get the appropriate list
+		pDBMySQL db=DBMySQL::synthesize();
+		db->updateUserList(m_User->getUsername(), list, blocked);
+		db->disconnect();
+
+		// store the old blocked list
+		std::vector<std::string> oldBlocked=m_User->getBlockedList();
+
+		// also update the user object
+		if (blocked)
+			m_User->setBlockedList(list);
+		else
+			m_User->setFriendList(list);
+
+		// now find out which users have been removed from the blocked list, and if
+		// they are online, inform them that we are online too
+		for (int i=0; i<oldBlocked.size(); i++) {
+			bool removed=true;
+
+			for (int j=0; j<list.size(); j++) {
+				if (oldBlocked[i]==list[j])
+					removed=false;
+			}
+
+			// if this user was removed, alert him of our presence
+			if (removed)
+				UserManager::instance()->sendUserStatusUpdate(oldBlocked[i], m_User->getUsername(), true);
+		}
 	}
 
 	catch (const DBMySQL::Exception &ex) {
@@ -260,8 +268,6 @@ void Protocol::handleUserListUpdate(Packet &p, bool blocked) {
 }
 
 void Protocol::handleUserRequest(Packet &p) {
-	ConfigFile *cfg=ConfigFile::instance();
-
 	// read the user and list target
 	std::string username=p.string();
 	char list=p.byte();
@@ -278,18 +284,33 @@ void Protocol::handleUserRequest(Packet &p) {
 
 	try {
 		// connect to the database and add the user to the list
-		DBMySQL db(cfg->getDBHost(), cfg->getDBPort(), cfg->getDBName());
-		db.connect(cfg->getDBUser(), cfg->getDBPassword());
-		DBMySQL::RequestResult res=db.addUserToList(m_User->getUsername(), username, (list==REQ_FRIENDS ? false : true));
-		db.disconnect();
+		pDBMySQL db=DBMySQL::synthesize();
+		DBMySQL::RequestResult res=db->addUserToList(m_User->getUsername(), username, (list==REQ_FRIENDS ? false : true));
+		db->disconnect();
 
 		// determine the results
 		if (res==DBMySQL::NoError) {
 			std::string msg="Successfully added user to ";
-			if (list==REQ_FRIENDS)
+
+			// complete the message string and update the user object
+			if (list==REQ_FRIENDS) {
 				msg+="friends list.";
-			else
+
+				std::vector<std::string> friends=m_User->getFriendList();
+				friends.push_back(username);
+				m_User->setFriendList(friends);
+			}
+
+			else {
 				msg+="blocked list.";
+
+				std::vector<std::string> blocked=m_User->getBlockedList();
+				blocked.push_back(username);
+				m_User->setBlockedList(blocked);
+
+				// make sure the blocked user can no longer see us if he's online right now
+				UserManager::instance()->sendUserStatusUpdate(username, m_User->getUsername(), false);
+			}
 
 			Packet r;
 			r.addByte(MSG_INFO);

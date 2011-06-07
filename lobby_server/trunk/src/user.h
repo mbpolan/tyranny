@@ -23,6 +23,7 @@
 #define USER_H
 
 #include <iostream>
+#include <vector>
 
 #include "protocol.h"
 
@@ -100,6 +101,34 @@ class User {
 		 */
 		Protocol* getProtocol() const { return m_Protocol; }
 
+		/**
+		 * Sets this user's friend list.
+		 *
+		 * @param list A list of usernames.
+		 */
+		void setFriendList(const std::vector<std::string> &list) { m_Friends=list; }
+
+		/**
+		 * Returns this user's friend list.
+		 *
+		 * @return A list of usernames.
+		 */
+		std::vector<std::string> getFriendList() const { return m_Friends; }
+
+		/**
+		 * Sets this user's blocked user list.
+		 *
+		 * @param list A list of usernames.
+		 */
+		void setBlockedList(const std::vector<std::string> &list) { m_Blocked=list; }
+
+		/**
+		 * Returns this user's blocked user list.
+		 *
+		 * @return A list of usernames.
+		 */
+		std::vector<std::string> getBlockedList() const { return m_Blocked; }
+
 	private:
 		/// The user's username.
 		std::string m_Username;
@@ -115,6 +144,12 @@ class User {
 
 		/// The user's protocol object.
 		Protocol *m_Protocol;
+
+		/// A cache of this user's friend list.
+		std::vector<std::string> m_Friends;
+
+		/// A cache of this user's blocked user list.
+		std::vector<std::string> m_Blocked;
 };
 
 #endif

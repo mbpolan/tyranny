@@ -25,6 +25,13 @@
 
 #include "dbmysql.h"
 
+// globals
+std::string g_Host="";
+int g_Port=3306;
+std::string g_DB="";
+std::string g_User="";
+std::string g_Password="";
+
 DBMySQL::DBMySQL(const std::string &host, int port, const std::string &db) {
 	m_Host=host;
 	m_Port=port;
@@ -41,6 +48,26 @@ DBMySQL::~DBMySQL() {
 		mysql_close(m_Handle);
 
 	mysql_library_end();
+}
+
+void DBMySQL::cache(const std::string &host, int port, const std::string &db, const std::string &user, const std::string &password) {
+	g_Host=host;
+	g_Port=port;
+	g_DB=db;
+	g_User=user;
+	g_Password=password;
+}
+
+pDBMySQL DBMySQL::synthesize() throw(DBMySQL::Exception) {
+	try {
+		std::auto_ptr<DBMySQL> db(new DBMySQL(g_Host, g_Port, g_DB));
+		db->connect(g_User, g_Password);
+		return db;
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		throw ex;
+	}
 }
 
 void DBMySQL::connect(const std::string &user, const std::string &password) throw(DBMySQL::Exception) {
@@ -118,8 +145,34 @@ void DBMySQL::loadUser(User *user) throw(DBMySQL::Exception) {
 	if (row[5])
 		user->setIsMuted((int) row[5]);
 
+	// load the user's friend list and blocked list
+	std::vector<std::string> friends, blocked;
+	try {
+		getUserList(user->getUsername(), friends, false);
+		getUserList(user->getUsername(), blocked, true);
+
+		user->setFriendList(friends);
+		user->setBlockedList(blocked);
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		throw ex;
+	}
+
 	// clean up
 	mysql_free_result(result);
+}
+
+void DBMySQL::flagUserOnline(const std::string &username, bool online) throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// form the sql string
+	std::string sql="UPDATE users SET online="+std::string(online ? "1" : "0")+" WHERE username='"+username+"'";
+
+	// query the server
+	if (mysql_query(m_Handle, sql.c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
 }
 
 void DBMySQL::getUserStatistics(const std::string &username, int &points, int &gamesPlayed, int &won, int &lost) throw(DBMySQL::Exception) {
