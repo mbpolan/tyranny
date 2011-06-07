@@ -38,6 +38,9 @@ class NetManager: public QObject {
 	Q_OBJECT
 
 	public:
+		enum UserRequest { FriendRequest, BlockRequest };
+
+	public:
 		/**
 		 * Default constructor.
 		 */
@@ -122,6 +125,14 @@ class NetManager: public QObject {
 		 */
 		void sendPasswordChange(const QString &password);
 
+		/**
+		 * Sends the server a request to add a user to either the friends list or blocked user list.
+		 *
+		 * @param username The username to add.
+		 * @param list The list to add the user to.
+		 */
+		void sendUserRequest(const QString &username, const UserRequest &list);
+
 	signals:
 		/// Signal emitted when a connection is established.
 		void connected();
@@ -135,11 +146,8 @@ class NetManager: public QObject {
 		/// Signal emitted when a general network error occurs.
 		void networkError(const QString &msg);
 
-		/// Signal emitted when a critical non-network error occurs.
-		void criticalError(const QString &msg);
-
 		/// Signal emitted when a general message should be displayed in the status bar.
-		void networkMessage(const QString &msg);
+		void statusMessage(const QString &msg);
 
 		/// Signal emitted when another user logs into the lobby.
 		void userLoggedIn(const QString &username);
@@ -161,6 +169,12 @@ class NetManager: public QObject {
 
 		/// Signal emitted when the server has responded with the user's profile data.
 		void userProfile(const QString &name, const QString &email, int age, const QString &bio);
+
+		/// Signal emitted when the server has sent an informational message.
+		void serverInfo(const QString &message);
+
+		/// Signal emitted when the server has sent an error message.
+		void serverError(const QString &message);
 
 	private slots:
 		/// Handler for socket error condition.

@@ -88,6 +88,9 @@ class MainWindow: public QMainWindow {
 		/// Handler for "Send" button clicks
 		void onSendButtonClicked();
 
+		/// Handler for context menu requests on the user list.
+		void onUserListContextMenu(const QPoint &pos);
+
 		/// Network handler for an established connection.
 		void onNetConnected();
 
@@ -99,9 +102,6 @@ class MainWindow: public QMainWindow {
 
 		/// Network handler for socket errors.
 		void onNetError(const QString &error);
-
-		/// Network handler for critical errors.
-		void onNetCriticalError(const QString &error);
 
 		/// Network handler for general messages.
 		void onNetMessage(const QString &msg);
@@ -126,6 +126,12 @@ class MainWindow: public QMainWindow {
 
 		/// Network handler for blocked list response.
 		void onNetBlockedList(const QStringList &list);
+
+		/// Network handler for informational server messages.
+		void onNetInfoMessage(const QString &msg);
+
+		/// Network handler for error server messages.
+		void onNetErrorMessage(const QString &msg);
 
 	protected:
 		/// Event handler for chat QLineEdit key presses

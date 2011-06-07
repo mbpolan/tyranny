@@ -122,6 +122,14 @@ void NetManager::sendPasswordChange(const QString &password) {
 	p.write(m_Socket);
 }
 
+void NetManager::sendUserRequest(const QString &username, const UserRequest &list) {
+	Packet p;
+	p.addByte(LB_USERREQUEST);
+	p.addString(username);
+	p.addByte((list==NetManager::FriendRequest ? REQ_FRIENDS : REQ_BLOCKED));
+	p.write(m_Socket);
+}
+
 void NetManager::onError(QAbstractSocket::SocketError error) {
 	switch(error) {
 		case QAbstractSocket::ConnectionRefusedError: emit networkError("Connection refused by peer."); break;
@@ -145,8 +153,8 @@ void NetManager::parsePacket(Packet &p) {
 	uint8_t header=p.byte();
 	switch(header) {
 		case AUTH_REQUEST: emit requireAuthentication(); break;
-		case AUTH_ERROR: emit criticalError(p.string()); break;
-		case AUTH_SUCCESS: emit networkMessage("Welcome to "+p.string()); break;
+		case AUTH_ERROR: emit serverError(p.string()); break;
+		case AUTH_SUCCESS: emit statusMessage("Welcome to "+p.string()); break;
 
 		case LB_USERIN: emit userLoggedIn(p.string()); break;
 		case LB_USEROUT: emit userLoggedOut(p.string()); break;
@@ -155,6 +163,9 @@ void NetManager::parsePacket(Packet &p) {
 		case LB_USERPROFILE_REQ: handleUserProfileRequest(p); break;
 		case LB_FRIENDS_REQ: handleFriendListRequest(p); break;
 		case LB_BLOCKED_REQ: handleBlockedListRequest(p); break;
+
+		case MSG_INFO: emit serverInfo(p.string()); break;
+		case MSG_ERROR: emit serverError(p.string()); break;
 
 		default: qDebug() << "*** WARNING *** : Unknown packet header: " << header; break;
 	}
