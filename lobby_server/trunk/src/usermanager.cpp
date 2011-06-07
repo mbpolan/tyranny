@@ -50,15 +50,16 @@ void UserManager::addUser(User *user) {
 		User *other=(*it).second;
 
 		// check if this other user is being blocked by the newly logged in user
-		bool ignore=false;
-		for (int i=0; i<user->getBlockedList().size(); i++) {
-			if (user->getBlockedList()[i]==other->getUsername())
-				ignore=true;
-		}
+		bool ignore=user->isBlocking(other->getUsername());
 
 		// ignore the other user is not being blocked, inform him that we just logged in
-		if (!ignore)
-			other->getProtocol()->sendUserLoggedIn(user);
+		if (!ignore) {
+			Protocol::UserStatus relation=Protocol::UserNone;
+			if (other->isBlocking(user->getUsername())) relation=Protocol::UserBlocked;
+			else if (other->isFriendsWith(user->getUsername())) relation=Protocol::UserFriend;
+
+			other->getProtocol()->sendUserLoggedIn(user, relation);
+		}
 
 		// now check if the other user is blocking THIS user
 		ignore=false;
@@ -68,8 +69,12 @@ void UserManager::addUser(User *user) {
 		}
 
 		// finally if we are not being blocked, inform us that this other user is online
-		if (other!=user && !ignore)
-			user->getProtocol()->sendUserLoggedIn(other);
+		if (other!=user && !ignore) {
+			Protocol::UserStatus relation=Protocol::UserNone;
+			if (user->isBlocking(other->getUsername())) relation=Protocol::UserBlocked;
+			else if (user->isFriendsWith(other->getUsername())) relation=Protocol::UserFriend;
+			user->getProtocol()->sendUserLoggedIn(other, relation);
+		}
 	}
 
 	// flag the user as online
@@ -149,8 +154,13 @@ void UserManager::sendUserStatusUpdate(const std::string &user, const std::strin
 	User *toWhom=m_UserMap[user];
 	User *targetUser=m_UserMap[target];
 	if (toWhom && targetUser) {
-		if (online)
-			toWhom->getProtocol()->sendUserLoggedIn(targetUser);
+		if (online) {
+			Protocol::UserStatus relation=Protocol::UserNone;
+			if (toWhom->isBlocking(targetUser->getUsername())) relation=Protocol::UserBlocked;
+			else if (toWhom->isFriendsWith(targetUser->getUsername())) relation=Protocol::UserFriend;
+			toWhom->getProtocol()->sendUserLoggedIn(targetUser, relation);
+		}
+
 		else
 			toWhom->getProtocol()->sendUserLoggedOut(targetUser);
 	}

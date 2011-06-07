@@ -22,13 +22,18 @@
 #ifndef PROTSPEC_H
 #define PROTSPEC_H
 
+/// User statuses.
+#define USER_NONE			0x00
+#define USER_BLOCKED		0x01
+#define USER_FRIEND			0x02
+
 /// Types of user requests and results.
 #define REQ_FRIENDS			0x01
 #define REQ_BLOCKED			0x02
 #define REQ_SUCCESS			0x03
 #define REQ_ERROR			0x04
 
-/// Authentication class packets
+/// Authentication and login class packets
 #define AUTH_DATA			0xA0
 #define AUTH_SUCCESS		0xA1
 #define AUTH_ERROR			0xA2

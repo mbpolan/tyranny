@@ -28,6 +28,10 @@ class User;
 
 class Protocol {
 	public:
+		/// User statuses with relation to the client.
+		enum UserStatus { UserNone, UserBlocked, UserFriend };
+
+	public:
 		/**
 		 * Default constructor.
 		 * @param socket Socket to associate with this protocol.
@@ -50,8 +54,9 @@ class Protocol {
 		 * Sends this user's client a packet containing the details of a new user who logged in.
 		 *
 		 * @param user The user who just logged in.
+		 * @param status The status of this user with respect to the client.
 		 */
-		void sendUserLoggedIn(User *other);
+		void sendUserLoggedIn(User *other, const Protocol::UserStatus &status);
 
 		/**
 		 * Sends this user's client a packet containing the details of a user who logged out.
