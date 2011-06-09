@@ -54,6 +54,12 @@ CREATE  TABLE IF NOT EXISTS `tyranny_lobby`.`rooms` (
   `password` VARCHAR(45) NULL ,
   `status` INT NULL ,
   `type` INT NULL ,
+  `max_turns` INT NULL ,
+  `max_humans` INT NULL ,
+  `fp_reward` INT NULL ,
+  `redist_method` INT NULL ,
+  `it_choice` INT NULL ,
+  `only_friends` INT NULL ,
   PRIMARY KEY (`gid`) ,
   INDEX `uid` (`uid` ASC) ,
   CONSTRAINT `uid`

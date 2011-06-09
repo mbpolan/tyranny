@@ -325,7 +325,7 @@ void DBMySQL::updateUserList(const std::string &username, const std::vector<std:
 	}
 }
 
-DBMySQL::RequestResult DBMySQL::addUserToList(const std::string &username, const std::string &other, bool blocked) {
+DBMySQL::RequestResult DBMySQL::addUserToList(const std::string &username, const std::string &other, bool blocked) throw(DBMySQL::Exception) {
 	if (!m_Handle)
 		throw DBMySQL::Exception("There is no current connection.");
 
@@ -344,4 +344,77 @@ DBMySQL::RequestResult DBMySQL::addUserToList(const std::string &username, const
 	}
 
 	return DBMySQL::NoError;
+}
+
+DBMySQL::UserActivity DBMySQL::isUserActive(const std::string &username) throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// check if the user is the owner of a room
+	std::string sql="SELECT * FROM rooms WHERE uid=(SELECT uid FROM users WHERE username='"+username+"')";
+
+	// query the server
+	if (mysql_query(m_Handle, sql.c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+
+	// see if we got any results
+	MYSQL_RES *result=mysql_store_result(m_Handle);
+	if (mysql_fetch_row(result)) {
+		mysql_free_result(result);
+		return DBMySQL::RoomOwner;
+	}
+
+	mysql_free_result(result);
+
+	// check if the user is playing in another room
+	sql="SELECT * FROM participants WHERE uid=(SELECT uid FROM users WHERE username='"+username+"')";
+
+	// query the server
+	if (mysql_query(m_Handle, sql.c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+
+	// again, see if we got any results
+	result=mysql_store_result(m_Handle);
+	if (mysql_fetch_row(result)) {
+		mysql_free_result(result);
+		return DBMySQL::Participant;
+	}
+
+	mysql_free_result(result);
+	return DBMySQL::NotActive;
+}
+
+int DBMySQL::createGameRoom(const std::string &owner, int maxTurns, int maxHumans, int freeParkingReward, const RedistMethod &rmethod,
+							 bool incomeTaxChoice, const std::string &password, bool onlyFriends) throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// form the sql string
+	std::stringstream ss;
+	ss << "INSERT INTO rooms(uid,password,status,type,max_turns,max_humans,fp_reward,redist_method,it_choice,only_friends) ";
+	ss << "VALUES((SELECT uid FROM users WHERE username='" << owner << "'), '";
+	ss << password << "', 0, " << (!password.empty() ? 1 : 0) << ", " << maxTurns << ", " << maxHumans << ", " << freeParkingReward << ", ";
+	ss << rmethod << ", " << (incomeTaxChoice ? 1 : 0) << ", " << (onlyFriends ? 1 : 0) << ")";
+
+	// query the server
+	if (mysql_query(m_Handle, ss.str().c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+
+	// query the server for the assigned room id
+	std::string sql="SELECT gid FROM rooms WHERE uid=(SELECT uid FROM users WHERE username='"+owner+"')";
+	if (mysql_query(m_Handle, sql.c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+
+	// parse the results
+	MYSQL_RES *result=mysql_store_result(m_Handle);
+	MYSQL_ROW row=mysql_fetch_row(result);
+
+	if (!row) {
+		mysql_free_result(result);
+		throw DBMySQL::Exception("No results for room.");
+	}
+
+	int gid=atoi(row[0]);
+	mysql_free_result(result);
+	return gid;
 }

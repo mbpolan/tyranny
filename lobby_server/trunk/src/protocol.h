@@ -23,6 +23,7 @@
 #define PROTOCOL_H
 
 #include "packet.h"
+#include "room.h"
 
 class User;
 
@@ -72,6 +73,17 @@ class Protocol {
 		 * @param message The contents of the message.
 		 */
 		void sendChatMessage(const std::string &user, const std::string &message);
+
+		/**
+		 * Sends this user an update about a game room in the lobby.
+		 *
+		 * @param gid The room's id number.
+		 * @param owner The room's owner.
+		 * @param playerCount The number of players in the room.
+		 * @param status The room status.
+		 * @param type The room type.
+		 */
+		void sendRoomUpdate(const Room *room);
 
 	private:
 		/**
@@ -126,10 +138,20 @@ class Protocol {
 
 		/**
 		 * Handler for adding users to friends/blocked lists.
-		 *
 		 * @param p The packet to parse.
 		 */
 		void handleUserRequest(Packet &p);
+
+		/**
+		 * Handler for creating a game room.
+		 * @param p The packet to parse.
+		 */
+		void handleCreateRoom(Packet &p);
+
+		/**
+		 * Handler for creating a game room.
+		 * @param p The packet to parse.
+		 */
 
 		/// The user associated with this protocol.
 		User *m_User;

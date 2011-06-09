@@ -5,6 +5,8 @@ tyranny_lobby_server_SOURCES = \
 	lobbyserver.cpp lobbyserver.h \
 	packet.cpp packet.h \
 	protocol.cpp protocol.h \
+	room.cpp room.h \
+	serverpool.cpp serverpool.h \
 	serversocket.cpp serversocket.h \
 	user.cpp user.h \
 	usermanager.cpp usermanager.h

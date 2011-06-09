@@ -29,12 +29,14 @@
 #include "packet.h"
 #include "protspec.h"
 #include "protocol.h"
+#include "serverpool.h"
 #include "serversocket.h"
 #include "user.h"
 #include "usermanager.h"
 
 // globals
 ConfigFile *g_ConfigFile;
+ServerPool *g_Pool;
 UserManager *g_UserManager;
 
 void* connectionHandler(void *arg) {
@@ -164,6 +166,24 @@ int main(int argc, char *argv[]) {
 	g_UserManager=new UserManager;
 
 	std::cout << "[done]\n";
+	std::cout << "Creating server pool...\t\t";
+
+	// create the server pool
+	g_Pool=new ServerPool;
+	std::vector<ConfigFile::Server> servers=g_ConfigFile->getGameServerList();
+	for (int i=0; i<servers.size(); i++)
+		g_Pool->addGameServer(servers[i].getIDString(), servers[i].getIP(), servers[i].getPort());
+
+	if (servers.empty()) {
+		std::cout << "[fail]\nAt least one game server must be defined in the configuration file.\n";
+		delete g_UserManager;
+		delete g_ConfigFile;
+
+		exit(1);
+	}
+
+	else
+		std::cout << "[done]\n";
 
 	// print out some status messages
 	std::cout << "Tyranny Lobby Server " << LOBBY_SERVER_VERSION << " running...\n";

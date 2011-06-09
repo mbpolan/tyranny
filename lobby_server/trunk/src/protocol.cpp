@@ -24,6 +24,8 @@
 #include "packet.h"
 #include "protocol.h"
 #include "protspec.h"
+#include "room.h"
+#include "serverpool.h"
 #include "user.h"
 #include "usermanager.h"
 
@@ -73,6 +75,30 @@ void Protocol::sendChatMessage(const std::string &user, const std::string &messa
 	p.write(m_Socket);
 }
 
+void Protocol::sendRoomUpdate(const Room *room) {
+	// translate both room status and type into protocol bytes
+	char st, ty;
+	switch(room->getStatus()) {
+		case Room::Open: st=ROOM_OPEN; break;
+		case Room::InProgress: st=ROOM_INPROGRESS; break;
+		case Room::Closed: st=ROOM_CLOSED; break;
+	}
+
+	switch(room->getType()) {
+		case Room::Public: ty=ROOM_PUBLIC; break;
+		case Room::Private: ty=ROOM_PRIVATE; break;
+	}
+
+	Packet p;
+	p.addByte(LB_ROOMLIST_UPD);
+	p.addUint32(room->getGid());
+	p.addString(room->getOwner());
+	p.addUint16(room->getPlayers().size());
+	p.addByte(st);
+	p.addByte(ty);
+	p.write(m_Socket);
+}
+
 void Protocol::parsePacket(Packet &p) {
 	uint8_t header=p.byte();
 	switch(header) {
@@ -105,6 +131,9 @@ void Protocol::parsePacket(Packet &p) {
 
 		// user sent a request to add another user to friends/blocked list
 		case LB_USERREQUEST: handleUserRequest(p); break;
+
+		// user asked to create a room
+		case LB_CREATEROOM: handleCreateRoom(p); break;
 
 		default: std::cout << "** Unknown packet header: " << header << std::endl; break;
 	}
@@ -336,5 +365,79 @@ void Protocol::handleUserRequest(Packet &p) {
 
 	catch (const DBMySQL::Exception &ex) {
 		std::cout << "Unable to update user friend list: " << ex.getMessage() << std::endl;
+	}
+}
+
+void Protocol::handleCreateRoom(Packet &p) {
+	// extract the data from the packet
+	int maxTurns=p.uint32();
+	int maxHumans=p.uint16();
+	int freeParkReward=p.uint32();
+	char propertyMethod=p.byte();
+	char incomeTaxChoice=p.byte();
+	std::string password=p.string();
+	char onlyFriends=p.byte();
+
+	try {
+		// connect to the database first
+		pDBMySQL db=DBMySQL::synthesize();
+
+		// see if this user already started a room, or is playing in a room now
+		DBMySQL::UserActivity activity=db->isUserActive(m_User->getUsername());
+		if (activity==DBMySQL::RoomOwner) {
+			Packet r;
+			r.addByte(LB_CREATEROOM);
+			r.addByte(PKT_ERROR);
+			r.addString("You have already started a game room.");
+			r.write(m_Socket);
+		}
+
+		else if (activity==DBMySQL::Participant) {
+			Packet r;
+			r.addByte(LB_CREATEROOM);
+			r.addByte(PKT_ERROR);
+			r.addString("You are already playing in another game room.");
+			r.write(m_Socket);
+		}
+
+		// otherwise the user is free to start a new room!
+		else {
+			DBMySQL::RedistMethod rMethod;
+			if (propertyMethod==PROP_RANDOM)
+				rMethod=DBMySQL::RandomToPlayers;
+			else
+				rMethod=DBMySQL::ReturnToBank;
+
+			// create the room in the database
+			int gid=
+			db->createGameRoom(m_User->getUsername(), maxTurns, maxHumans, freeParkReward,
+							   rMethod, incomeTaxChoice, password, onlyFriends);
+
+			// have the server pool assign this room a server
+			std::string host;
+			int port;
+			ServerPool::instance()->selectGameServer(host, port);
+
+			// register the room with the user manager
+			Room::Type roomType;
+			if (password.empty()) roomType=Room::Public;
+			else roomType=Room::Private;
+
+			UserManager::instance()->registerGameRoom(gid, m_User->getUsername(), roomType, host, port);
+
+			// reply to the client
+			Packet r;
+			r.addByte(LB_CREATEROOM);
+			r.addByte(PKT_SUCCESS);
+			r.addString(host);
+			r.addUint32(port);
+			r.write(m_Socket);
+		}
+
+		db->disconnect();
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to create game room: " << ex.getMessage() << std::endl;
 	}
 }

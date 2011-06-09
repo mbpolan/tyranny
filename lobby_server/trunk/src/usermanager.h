@@ -26,6 +26,7 @@
 #include <map>
 #include <pthread.h>
 
+#include "room.h"
 #include "user.h"
 
 class UserManager {
@@ -77,9 +78,23 @@ class UserManager {
 		 */
 		void sendUserStatusUpdate(const std::string &user, const std::string &target, bool online);
 
+		/**
+		 * Opens a new game room with the given parameters, and sends an update to all clients.
+		 *
+		 * @param gid The room id number.
+		 * @param owner The room's owner.
+		 * @param type The room type.
+		 * @param host The hostname/IP address of the game server hosting this room.
+		 * @param port The port of the hosting game server.
+		 */
+		void registerGameRoom(int gid, const std::string &owner, const Room::Type &type, const std::string &host, int port);
+
 	private:
 		/// Map of users, hashed according to their usernames.
 		std::map<std::string, User*> m_UserMap;
+
+		/// Map of current rooms, hashed according to their id numbers.
+		std::map<int, Room*> m_Rooms;
 
 		/// Synchronization variables.
 		pthread_mutex_t m_Mutex;
