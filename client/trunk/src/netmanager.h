@@ -26,6 +26,7 @@
 #include <QTcpSocket>
 
 #include "packet.h"
+#include "roomdata.h"
 
 /**
  * Manager for most network operations required by the client.
@@ -41,6 +42,8 @@ class NetManager: public QObject {
 		enum UserRequest { FriendRequest, BlockRequest };
 
 		enum UserStatus { UserNone, UserFriend, UserBlocked };
+
+		enum RedistMethod { RandomToPlayers, ReturnToBank };
 
 	public:
 		/**
@@ -135,6 +138,20 @@ class NetManager: public QObject {
 		 */
 		void sendUserRequest(const QString &username, const UserRequest &list);
 
+		/**
+		 * Sends a request to the server to create a new game room with the given parameters.
+		 *
+		 * @param maxTurns Maximum number of game turns.
+		 * @param maxHumans Maximum number of human players.
+		 * @param freeParkReward Money paid to the player for stepping on Free Parking.
+		 * @param propMethod Property redistribution method following player bankruptcy.
+		 * @param incomeTaxChoice Whether or not players have a choice of free when stepping on Income Tax.
+		 * @param password Room password.
+		 * @param onlyFriends Whether or not only friends can join this room.
+		 */
+		void sendCreateRoom(int maxTurns, int maxHumans, int freeParkReward, const RedistMethod &propMethod,
+					  bool incomeTaxChoice, const QString &password, bool onlyFriends);
+
 	signals:
 		/// Signal emitted when a connection is established.
 		void connected();
@@ -177,6 +194,15 @@ class NetManager: public QObject {
 
 		/// Signal emitted when the server has sent an error message.
 		void serverError(const QString &message);
+
+		/// Signal emitted when the user should connect to a game server.
+		void joinGameServer(const QString &host, int port);
+
+		/// Signal emitted when updated data about a room is available.
+		void roomListUpdate(const RoomData &data);
+
+		/// Signal emitted when a list of rooms is available.
+		void roomListRefresh(const QVector<RoomData> &list);
 
 	private slots:
 		/// Handler for socket error condition.
@@ -227,6 +253,24 @@ class NetManager: public QObject {
 		 * @param p The packet to parse.
 		 */
 		void handleBlockedListRequest(Packet &p);
+
+		/**
+		 * Parses a packet containing the response for creating a room.
+		 * @param p The packet to parse.
+		 */
+		void handleCreateRoomResponse(Packet &p);
+
+		/**
+		 * Parses a packet containing updated data about a room.
+		 * @param p The packet to parse.
+		 */
+		void handleRoomListUpdate(Packet &p);
+
+		/**
+		 * Parses a packet containing a list of rooms.
+		 * @param p The packet to parse.
+		 */
+		void handleRoomListRefresh(Packet &p);
 
 		/// Communications socket.
 		QTcpSocket *m_Socket;

@@ -130,6 +130,20 @@ void NetManager::sendUserRequest(const QString &username, const UserRequest &lis
 	p.write(m_Socket);
 }
 
+void NetManager::sendCreateRoom(int maxTurns, int maxHumans, int freeParkReward, const RedistMethod &propMethod,
+					  bool incomeTaxChoice, const QString &password, bool onlyFriends) {
+	Packet p;
+	p.addByte(LB_CREATEROOM);
+	p.addUint32(maxTurns);
+	p.addUint16(maxHumans);
+	p.addUint32(freeParkReward);
+	p.addByte((propMethod==NetManager::RandomToPlayers ? PROP_RANDOM : PROP_RETURNBANK));
+	p.addByte((incomeTaxChoice ? 0x01 : 0x00));
+	p.addString(password);
+	p.addByte((onlyFriends ? 0x01 : 0x00));
+	p.write(m_Socket);
+}
+
 void NetManager::onError(QAbstractSocket::SocketError error) {
 	switch(error) {
 		case QAbstractSocket::ConnectionRefusedError: emit networkError("Connection refused by peer."); break;
@@ -163,6 +177,9 @@ void NetManager::parsePacket(Packet &p) {
 		case LB_USERPROFILE_REQ: handleUserProfileRequest(p); break;
 		case LB_FRIENDS_REQ: handleFriendListRequest(p); break;
 		case LB_BLOCKED_REQ: handleBlockedListRequest(p); break;
+		case LB_CREATEROOM: handleCreateRoomResponse(p); break;
+		case LB_ROOMLIST_UPD: handleRoomListUpdate(p); break;
+		case LB_ROOMLIST_REFRESH: handleRoomListRefresh(p); break;
 
 		case MSG_INFO: emit serverInfo(p.string()); break;
 		case MSG_ERROR: emit serverError(p.string()); break;
@@ -230,13 +247,91 @@ void NetManager::handleFriendListRequest(Packet &p) {
 }
 
 void NetManager::handleBlockedListRequest(Packet &p) {
-    // get the amount of usernames
-    int count=p.uint16();
+	// get the amount of usernames
+	int count=p.uint16();
 
-    // read each username
-    QStringList list;
-    for (int i=0; i<count; i++)
-	  list.append(p.string());
+	// read each username
+	QStringList list;
+	for (int i=0; i<count; i++)
+		list.append(p.string());
 
-    emit userBlockedList(list);
+	emit userBlockedList(list);
+}
+
+void NetManager::handleCreateRoomResponse(Packet &p) {
+	// determine the results
+	char result=p.byte();
+	if (result==PKT_ERROR)
+		emit serverError(p.string());
+	else {
+		// get the connection details
+		QString host=p.string();
+		int port=p.uint32();
+
+		emit joinGameServer(host, port);
+	}
+}
+
+void NetManager::handleRoomListUpdate(Packet &p) {
+	// gather the data
+    	int gid=p.uint32();
+	QString owner=p.string();
+	int pcount=p.uint16();
+	char status=p.byte();
+	char type=p.byte();
+
+	// translate the status and type bytes
+	RoomData::Status st;
+	RoomData::Type ty;
+
+	switch(status) {
+		default: st=RoomData::Open; break;
+		case ROOM_INPROGRESS: st=RoomData::InProgress; break;
+		case ROOM_CLOSED: st=RoomData::Closed; break;
+	}
+
+	switch(type) {
+		default: ty=RoomData::Public; break;
+		case ROOM_PRIVATE: ty=RoomData::Private; break;
+	}
+
+	RoomData data(gid, owner, pcount, st, ty);
+	emit roomListUpdate(data);
+}
+
+void NetManager::handleRoomListRefresh(Packet &p) {
+	QVector<RoomData> list;
+
+	// get the amount of rooms
+	int count=p.uint32();
+
+	// read each room
+	for (int i=0; i<count; i++) {
+		// extract this room's data
+		int gid=p.uint32();
+		QString owner=p.string();
+		int pcount=p.uint16();
+		char status=p.byte();
+		char type=p.byte();
+
+		// translate the status and type bytes
+		RoomData::Status st;
+		RoomData::Type ty;
+
+		switch(status) {
+			default: st=RoomData::Open; break;
+			case ROOM_INPROGRESS: st=RoomData::InProgress; break;
+			case ROOM_CLOSED: st=RoomData::Closed; break;
+		}
+
+		switch(type) {
+			default: ty=RoomData::Public; break;
+			case ROOM_PRIVATE: ty=RoomData::Private; break;
+		}
+
+		// add this room data
+		list.append(RoomData(gid, owner, pcount, st, ty));
+	}
+
+	emit roomListRefresh(list);
 }

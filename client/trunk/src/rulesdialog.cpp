@@ -17,64 +17,39 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the client-server protocol.
+// rulesdialog.cpp: implementation of RulesDialog class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#include "rulesdialog.h"
 
-/// General codes.
-#define PKT_ERROR			0x00
-#define PKT_SUCCESS		0x01
+#include "ui/ui_rulesdialog.h"
 
-/// User statuses.
-#define USER_NONE			0x00
-#define USER_BLOCKED		0x01
-#define USER_FRIEND		0x02
-
-/// Types of user requests.
-#define REQ_FRIENDS		0x01
-#define REQ_BLOCKED		0x02
-#define REQ_SUCCESS		0x03
-#define REQ_ERROR			0x04
-
-/// Room parameters.
-#define PROP_RANDOM	      0x00
-#define PROP_RETURNBANK		0x01
-#define ROOM_OPEN			0x02
-#define ROOM_INPROGRESS		0x03
-#define ROOM_CLOSED		0x04
-#define ROOM_PUBLIC		0x05
-#define ROOM_PRIVATE		0x06
+RulesDialog::Settings::Settings(int maxTurns, int maxHumans, int freeParkReward, const PropertyRedistribution &redistMethod,
+					  bool incomeTaxChoice, const QString &password, bool onlyFriends) {
+    m_MaxTurns=maxTurns;
+    m_MaxHumans=maxHumans;
+    m_FreeParkReward=freeParkReward;
+    m_PropRedist=redistMethod;
+    m_IncomeTaxChoice=incomeTaxChoice;
+    m_Password=password;
+    m_OnlyFriends=onlyFriends;
+}
 
 /****************************************************************************/
 
-/// Authentication class packets
-#define AUTH_DATA			0xA0
-#define AUTH_SUCCESS		0xA1
-#define AUTH_ERROR		0xA2
-#define AUTH_LOGOUT		0xA3
-#define AUTH_REQUEST		0xA4
+RulesDialog::RulesDialog(QWidget *parent): QDialog(parent) {
+	ui=new Ui::RulesDialog;
+	ui->setupUi(this);
+}
 
-/// General lobby actions
-#define LB_USERIN			0xB0
-#define LB_USEROUT		0xB1
-#define LB_CHATMESSAGE		0xB2
-#define LB_STATISTICS		0xB3
-#define LB_USERPROFILE_REQ	0xB4
-#define LB_USERPROFILE_UPD	0xB5
-#define LB_CHANGEPASSWORD	0xB6
-#define LB_FRIENDS_REQ		0xB7
-#define LB_FRIENDS_UPD		0xB8
-#define LB_BLOCKED_REQ		0xB9
-#define LB_BLOCKED_UPD		0xBA
-#define LB_USERREQUEST		0xBB
-#define LB_CREATEROOM		0xBC
-#define LB_JOINROOM		0xBD
-#define LB_ROOMLIST_REFRESH	0xBE
-#define LB_ROOMLIST_UPD		0xBF
+RulesDialog::Settings RulesDialog::getDefinedSettings() const {
+	// serialize the data from the dialog
+	int maxTurns=ui->turnBox->value();
+	int maxHumans=ui->humanPlayerBox->value();
+	int freeParkReward=ui->freeParkMoneyCB->value();
+	Settings::PropertyRedistribution prop=(ui->propRedistCB->currentText()=="Random to Players" ? Settings::Random : Settings::ReturnToBank);
+	bool incomeTaxChoice=ui->incomeTaxCB->isChecked();
+	QString password=ui->passwordEdit->text();
+	bool onlyFriends=ui->friendsOnlyCB->isChecked();
 
-/// Server messages
-#define MSG_INFO			0xE1
-#define MSG_ERROR			0xE2
-
-#endif
+	return Settings(maxTurns, maxHumans, freeParkReward, prop, incomeTaxChoice, password, onlyFriends);
+}

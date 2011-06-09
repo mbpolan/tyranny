@@ -70,6 +70,9 @@ class MainWindow: public QMainWindow {
 		/// Handler for File -> Quit action.
 		void onQuit();
 
+		/// Handler for Game -> Create Room
+		void onCreateRoom();
+
 		/// Handler for Game -> Manage Friends action.
 		void onManageFriends();
 
@@ -132,6 +135,15 @@ class MainWindow: public QMainWindow {
 
 		/// Network handler for error server messages.
 		void onNetErrorMessage(const QString &msg);
+
+		/// Network handler for joining a game server.
+		void onNetJoinGameServer(const QString &host, int port);
+
+		/// Network handler for updating a room.
+		void onNetRoomListUpdate(const RoomData &room);
+
+		/// Network handler for updating the entire list of rooms.
+		void onNetRoomListRefresh(const QVector<RoomData> &list);
 
 	protected:
 		/// Event handler for chat QLineEdit key presses
