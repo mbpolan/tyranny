@@ -22,12 +22,14 @@
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMessageBox>
+#include <sstream>
 
 #include "authdialog.h"
 #include "iohandler.h"
 #include "mainwindow.h"
 #include "prefdialog.h"
 #include "profiledialog.h"
+#include "rulesdialog.h"
 #include "settingsdialog.h"
 #include "statsdialog.h"
 #include "userlistdialog.h"
@@ -42,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	connect(ui->actionConnect, SIGNAL(triggered()), this, SLOT(onConnect()));
 	connect(ui->actionDisconnect, SIGNAL(triggered()), this, SLOT(onDisconnect()));
 	connect(ui->actionPreferences, SIGNAL(triggered()), this, SLOT(onPreferences()));
+	connect(ui->actionCreate_Room, SIGNAL(triggered()), this, SLOT(onCreateRoom()));
 	connect(ui->actionManage_Friends, SIGNAL(triggered()), this, SLOT(onManageFriends()));
 	connect(ui->actionBlocked_Users, SIGNAL(triggered()), this, SLOT(onBlockedUsers()));
 	connect(ui->actionEdit_Profile, SIGNAL(triggered()), this, SLOT(onEditProfile()));
@@ -106,6 +109,9 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(userBlockedList(QStringList)), this, SLOT(onNetBlockedList(QStringList)));
 	connect(m_Network, SIGNAL(serverInfo(QString)), this, SLOT(onNetInfoMessage(QString)));
 	connect(m_Network, SIGNAL(serverError(QString)), this, SLOT(onNetErrorMessage(QString)));
+	connect(m_Network, SIGNAL(joinGameServer(QString,int)), this, SLOT(onNetJoinGameServer(QString,int)));
+	connect(m_Network, SIGNAL(roomListUpdate(RoomData)), this, SLOT(onNetRoomListUpdate(RoomData)));
+	connect(m_Network, SIGNAL(roomListRefresh(QVector<RoomData>)), this, SLOT(onNetRoomListRefresh(QVector<RoomData>)));
 
 	m_Network->connectToServer(m_PrefData->getIP(), m_PrefData->getPort());
 }
@@ -132,6 +138,24 @@ void MainWindow::onPreferences() {
 
 void MainWindow::onQuit() {
 	qApp->quit();
+}
+
+void MainWindow::onCreateRoom() {
+	// present the user with the settings dialog
+	RulesDialog rd(this);
+	if (rd.exec()==QDialog::Accepted) {
+		// get the data and send it to the server
+		RulesDialog::Settings st=rd.getDefinedSettings();
+
+		// find out the property redistribution method
+		RulesDialog::Settings::PropertyRedistribution method=st.getPropertyRedistributionMethod();
+		NetManager::RedistMethod prop=(method==RulesDialog::Settings::Random ? NetManager::RandomToPlayers : NetManager::ReturnToBank);
+
+
+		// send this data to the server
+		m_Network->sendCreateRoom(st.getMaxTurns(), st.getMaxHumans(), st.getFreeParkingReward(),
+						  prop, st.getIncomeTaxChoice(), st.getRoomPassword(), st.getOnlyFriends());
+	}
 }
 
 void MainWindow::onManageFriends() {
@@ -383,6 +407,72 @@ void MainWindow::onNetInfoMessage(const QString &msg) {
 
 void MainWindow::onNetErrorMessage(const QString &msg) {
 	QMessageBox::critical(this, tr("Error"), msg, QMessageBox::Ok, QMessageBox::NoButton);
+}
+
+void MainWindow::onNetJoinGameServer(const QString &host, int port) {
+	// TODO: activate game window and start new protocol
+	std::stringstream ss;
+	ss << "Connect to game server at " << host.toStdString() << ":" << port;
+
+	QMessageBox::information(this, tr("Stub Connection Info"), ss.str().c_str());
+}
+
+void MainWindow::onNetRoomListUpdate(const RoomData &room) {
+	// walk the list of rooms and find the room by its id number
+	for (int i=0; i<ui->roomList->topLevelItemCount(); i++) {
+		QTreeWidgetItem *item=ui->roomList->topLevelItem(i);
+		int id=item->text(0).toInt();
+		if (id==room.getGid()) {
+			// update the room's attributes
+			item->setText(1, room.getOwner());
+			item->setText(2, QString("%1").arg(room.getPlayerCount()));
+
+			// translate room status and type into text
+			QString status, type;
+			switch(room.getStatus()) {
+				case RoomData::Open: status="Open"; break;
+				case RoomData::InProgress: status="In Progress"; break;
+				case RoomData::Closed: status="Closed"; break;
+			}
+
+			switch(room.getType()) {
+				case RoomData::Public: type="Public"; break;
+				case RoomData::Private: type="Private"; break;
+			}
+
+			// set these column labels as well
+			item->setText(3, status);
+			item->setText(4, type);
+
+			return;
+		}
+	}
+
+	// if we are still here, then the room wasn't found so we create an entry for it
+	QTreeWidgetItem *item=new QTreeWidgetItem(ui->roomList);
+	item->setText(0, QString("%1").arg(room.getGid()));
+	item->setText(1, room.getOwner());
+	item->setText(2, QString("%1").arg(room.getPlayerCount()));
+
+	// translate room status and type into text
+	QString status, type;
+	switch(room.getStatus()) {
+		case RoomData::Open: status="Open"; break;
+		case RoomData::InProgress: status="In Progress"; break;
+		case RoomData::Closed: status="Closed"; break;
+	}
+
+	switch(room.getType()) {
+		case RoomData::Public: type="Public"; break;
+		case RoomData::Private: type="Private"; break;
+	}
+
+	item->setText(3, status);
+	item->setText(4, type);
+}
+
+void MainWindow::onNetRoomListRefresh(const QVector<RoomData> &list) {
+
 }
 
 bool MainWindow::eventFilter(QObject *sender, QEvent *e) {

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>350</width>
-    <height>306</height>
+    <width>382</width>
+    <height>344</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,24 +59,48 @@
           </property>
          </widget>
         </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Reward for Free Parking</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QSpinBox" name="freeParkMoneyCB"/>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Property Redistribution</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QComboBox" name="propRedistCB">
+          <item>
+           <property name="text">
+            <string>Random to Players</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Return to Bank</string>
+           </property>
+          </item>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <widget class="QCheckBox" name="freeParkingCB">
-          <property name="text">
-           <string>Stepping on Free Parking earns money.</string>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QCheckBox" name="incomeTaxCB">
           <property name="toolTip">
            <string>Leave this unchecked to force the player to pay $200 for landing on Income Tax.</string>
           </property>
           <property name="text">
-           <string>Income Tax gives choice of 20% or $200</string>
+           <string>Income Tax gives choice of 20% or flat fee.</string>
           </property>
          </widget>
         </item>

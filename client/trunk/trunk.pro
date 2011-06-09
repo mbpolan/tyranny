@@ -22,7 +22,9 @@ HEADERS += src/mainwindow.h \
     src/statsdialog.h \
     src/profiledialog.h \
     src/settingsdialog.h \
-    src/userlistdialog.h
+    src/userlistdialog.h \
+    src/rulesdialog.h \
+    src/roomdata.h
 FORMS += src/ui/mainwindow.ui \
     src/ui/prefdialog.ui \
     src/ui/authdialog.ui \
@@ -40,4 +42,5 @@ SOURCES += src/client.cpp src/mainwindow.cpp \
     src/statsdialog.cpp \
     src/profiledialog.cpp \
     src/settingsdialog.cpp \
-    src/userlistdialog.cpp
+    src/userlistdialog.cpp \
+    src/rulesdialog.cpp
