@@ -167,3 +167,20 @@ void UserManager::sendUserStatusUpdate(const std::string &user, const std::strin
 
 	pthread_mutex_unlock(&m_Mutex);
 }
+
+void UserManager::registerGameRoom(int gid, const std::string &owner, const Room::Type &type, const std::string &host, int port) {
+	pthread_mutex_lock(&m_Mutex);
+
+	Room *room=new Room(gid, owner, type);
+	room->setStatus(Room::Open);
+	room->setConnectionInfo(host, port);
+	m_Rooms[gid]=room;
+
+	// now alert all clients
+	for (std::map<std::string, User*>::iterator it=m_UserMap.begin(); it!=m_UserMap.end(); ++it) {
+		User *other=(*it).second;
+		other->getProtocol()->sendRoomUpdate(room);
+	}
+
+	pthread_mutex_unlock(&m_Mutex);
+}

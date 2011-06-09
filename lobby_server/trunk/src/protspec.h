@@ -22,18 +22,33 @@
 #ifndef PROTSPEC_H
 #define PROTSPEC_H
 
+/// General codes.
+#define PKT_ERROR			0x00
+#define PKT_SUCCESS			0x01
+
 /// User statuses.
 #define USER_NONE			0x00
 #define USER_BLOCKED		0x01
 #define USER_FRIEND			0x02
 
-/// Types of user requests and results.
+/// Types of user requests.
 #define REQ_FRIENDS			0x01
 #define REQ_BLOCKED			0x02
 #define REQ_SUCCESS			0x03
 #define REQ_ERROR			0x04
 
-/// Authentication and login class packets
+/// Room parameters.
+#define PROP_RANDOM			0x00	// property distributed randomly to players
+#define PROP_RETURNBANK		0x01	// property returned to bank
+#define ROOM_OPEN			0x02
+#define ROOM_INPROGRESS		0x03
+#define ROOM_CLOSED			0x04
+#define ROOM_PUBLIC			0x05
+#define ROOM_PRIVATE		0x06
+
+/****************************************************************************/
+
+/// Authentication class packets
 #define AUTH_DATA			0xA0
 #define AUTH_SUCCESS		0xA1
 #define AUTH_ERROR			0xA2
@@ -41,18 +56,22 @@
 #define AUTH_REQUEST		0xA4
 
 /// General lobby actions
-#define LB_USERIN			0xB1
-#define LB_USEROUT			0xB2
-#define LB_CHATMESSAGE		0xB3
-#define LB_STATISTICS		0xB4
-#define LB_USERPROFILE_REQ	0xB5
-#define LB_USERPROFILE_UPD	0xB6
-#define LB_CHANGEPASSWORD	0xB7
-#define LB_FRIENDS_REQ		0xB8
-#define LB_FRIENDS_UPD		0xB9
-#define LB_BLOCKED_REQ		0xBA
-#define LB_BLOCKED_UPD		0xBB
-#define LB_USERREQUEST		0xBC
+#define LB_USERIN			0xB0
+#define LB_USEROUT			0xB1
+#define LB_CHATMESSAGE		0xB2
+#define LB_STATISTICS		0xB3
+#define LB_USERPROFILE_REQ	0xB4
+#define LB_USERPROFILE_UPD	0xB5
+#define LB_CHANGEPASSWORD	0xB6
+#define LB_FRIENDS_REQ		0xB7
+#define LB_FRIENDS_UPD		0xB8
+#define LB_BLOCKED_REQ		0xB9
+#define LB_BLOCKED_UPD		0xBA
+#define LB_USERREQUEST		0xBB
+#define LB_CREATEROOM		0xBC
+#define LB_JOINROOM			0xBD
+#define LB_ROOMLIST_REFRESH	0xBE
+#define LB_ROOMLIST_UPD		0xBF
 
 /// Server messages
 #define MSG_INFO			0xE1
