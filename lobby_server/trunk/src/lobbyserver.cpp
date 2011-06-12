@@ -83,6 +83,9 @@ void* connectionHandler(void *arg) {
 				// add him to the pool
 				g_UserManager->addUser(user);
 
+				// send the user a list of rooms open now
+				g_UserManager->sendRoomList(user->getUsername());
+
 				// begin the communications loop
 				p->communicationLoop();
 
@@ -144,6 +147,24 @@ int main(int argc, char *argv[]) {
 
 	std::cout << "[done]\n";
 	
+	// prepare the database
+	std::cout << "Preparing database...\t\t";
+
+	try {
+		pDBMySQL db=DBMySQL::synthesize();
+		db->prepare();
+		db->disconnect();
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "[fail]\n";
+		std::cout << ex.getMessage() << std::endl;
+
+		exit(1);
+	}
+
+	std::cout << "[done]\n";
+
 	// create the server socket and activate it
 	ServerSocket sock(g_ConfigFile->getIP(), g_ConfigFile->getPort());
 	

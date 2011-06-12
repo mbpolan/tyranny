@@ -79,17 +79,64 @@ class UserManager {
 		void sendUserStatusUpdate(const std::string &user, const std::string &target, bool online);
 
 		/**
+		 * Sends the target user a list of current rooms.
+		 *
+		 * @param user The user to whom the list should be sent.
+		 */
+		void sendRoomList(const std::string &user);
+
+		/**
 		 * Opens a new game room with the given parameters, and sends an update to all clients.
 		 *
 		 * @param gid The room id number.
 		 * @param owner The room's owner.
 		 * @param type The room type.
+		 * @param password The room's password.
+		 * @param friendsOnly Whether or not only friends of the owner may join.
 		 * @param host The hostname/IP address of the game server hosting this room.
 		 * @param port The port of the hosting game server.
 		 */
-		void registerGameRoom(int gid, const std::string &owner, const Room::Type &type, const std::string &host, int port);
+		void registerGameRoom(int gid, const std::string &owner, const Room::Type &type,
+							  const std::string &password, bool friendsOnly, const std::string &host, int port);
+
+		/**
+		 * Attempts to join the given user to the game room with id number gid.
+		 * In the case that this method fails, due to whatever reason, the parameters host and port will
+		 * not be set to anything, and instead, only error will be set to a string value describing
+		 * what went wrong. Otherwise, only the host and port arguments will be set on success.
+		 *
+		 * @param gid The room id number.
+		 * @param username The user who wishes to join.
+		 * @param password The room password.
+		 * @param host This gets set to the hosting game server's hostname/IP address.
+		 * @param port This gets set to the hosting game server's port.
+		 * @param error This gets set to a description of an error if this method fails.
+		 * @return true if the user joined the room, false otherwise.
+		 */
+		bool joinGameRoom(int gid, const std::string &username, const std::string &password,
+						  std::string &host, int &port, std::string &error);
+
+		/**
+		 * An overloaded method for convenience. Joins a player to a game room, not returning
+		 * details about the game server hosting the room.
+		 *
+		 * @param gid The room id number.
+		 * @param username The user who wishes to join.
+		 * @param password The room password.
+		 * @param error This gets set to a description of an error if this method fails.
+		 * @return true if the user joined the room, false otherwise.
+		 */
+		bool joinGameRoom(int gid, const std::string &username, const std::string &password, std::string &error);
 
 	private:
+		/**
+		 * Finds the specified user and returns a pointer to his object if he's online.
+		 *
+		 * @param username The user to find.
+		 * @return A pointer to a User object, or NULL if the user is not online.
+		 */
+		User* getOnlineUser(const std::string &username) const;
+
 		/// Map of users, hashed according to their usernames.
 		std::map<std::string, User*> m_UserMap;
 

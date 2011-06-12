@@ -116,6 +116,12 @@ class DBMySQL {
 		void disconnect() throw(DBMySQL::Exception);
 
 		/**
+		 * Cleans out stale data from the database and prepares it for a new run of
+		 * the lobby server.
+		 */
+		void prepare() throw(DBMySQL::Exception);
+
+		/**
 		 * Tries to authenticate the given user information against the database.
 		 *
 		 * @param username The username.
@@ -232,6 +238,14 @@ class DBMySQL {
 		 */
 		int createGameRoom(const std::string &owner, int maxTurns, int maxHumans, int freeParkingReward,
 							const RedistMethod &rmethod, bool incomeTaxChoice, const std::string &password, bool onlyFriends) throw(DBMySQL::Exception);
+
+		/**
+		 * Inserts a record for a user who is participating in a game room.
+		 *
+		 * @param gid The room's id number.
+		 * @param username The user in question.
+		 */
+		void insertRoomParticipant(int gid, const std::string &username) throw(DBMySQL::Exception);
 
 	private:
 		/// The server address.
