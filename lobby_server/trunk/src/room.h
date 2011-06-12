@@ -35,6 +35,74 @@ class Room {
 
 	public:
 		/**
+		 * Defines the rules set by the room owner.
+		 */
+		class Rules {
+			public:
+				/// Property redistribution method.
+				enum RedistMethod { RandomToPlayers=0, ReturnToBank };
+
+			public:
+				/// Default constructor
+				Rules() { }
+
+				/**
+				 * Constructs a rule set object with the given user-defined rules.
+				 *
+				 * @param maxTurns The maximum amount of turns.
+				 * @param maxHumans The maximum amount of human players.
+				 * @param freeParkReward Money paid for stepping on Free Parking.
+				 * @param incomeTaxChoice Whether or not players can choose what to pay on Income Tax.
+				 * @param rmethod The property redistribution method.
+				 */
+				Rules(int maxTurns, int maxHumans, int freeParkReward, bool incomeTaxChoice, const RedistMethod &rmethod) {
+					m_MaxTurns=maxTurns;
+					m_MaxHumans=maxHumans;
+					m_FreeParkReward=freeParkReward;
+					m_ITChoice=incomeTaxChoice;
+					m_PropRedist=rmethod;
+				}
+
+				/**
+				 * Returns the maximum amount of game turns.
+				 * @return Max game turns.
+				 */
+				int getMaxTurns() const { return m_MaxTurns; }
+
+				/**
+				 * Returns the maximum amount of human players.
+				 * @return Max human players.
+				 */
+				int getMaxHumans() const { return m_MaxHumans; }
+
+				/**
+				 * Returns the money paid for stepping on Free Parking.
+				 * @return The money for the bank to pay.
+				 */
+				int getFreeParkReward() const { return m_FreeParkReward; }
+
+				/**
+				 * Returns whether or not players have a choice of fee for Income Tax.
+				 * @return true if yes, false otherwise.
+				 */
+				int getIncomeTaxChoice() const { return m_ITChoice; }
+
+				/**
+				 * Returns the property redistribution method.
+				 * @return The method in which properties are distributed after bankruptcy.
+				 */
+				RedistMethod getRedistributionMethod() const { return m_PropRedist; }
+
+			private:
+				int m_MaxTurns;
+				int m_MaxHumans;
+				int m_FreeParkReward;
+				bool m_ITChoice;
+				RedistMethod m_PropRedist;
+		};
+
+	public:
+		/**
 		 * Creates an empty room with the given id number and owner.
 		 *
 		 * @param gid The room id number.
@@ -44,6 +112,20 @@ class Room {
 		 * @param friendsOnly Whether or not only friends of the owner may join.
 		 */
 		Room(int gid, const std::string &owner, const Type &type, const std::string &password, bool friendsOnly);
+
+		/**
+		 * Sets the rules for this room.
+		 *
+		 * @param rules A Rules object prepared for this room.
+		 */
+		void setRules(const Rules &rules) { m_Rules=rules; }
+
+		/**
+		 * Returns the rules for this room.
+		 *
+		 * @return A Rules object.
+		 */
+		Rules getRules() const { return m_Rules; }
 
 		/**
 		 * Sets the connection details for hosting this room.
@@ -143,6 +225,9 @@ class Room {
 
 		/// The status of the room.
 		Status m_Status;
+
+		/// The rules of this room.
+		Rules m_Rules;
 
 		/// The hostname of the hosting server.
 		std::string m_Host;

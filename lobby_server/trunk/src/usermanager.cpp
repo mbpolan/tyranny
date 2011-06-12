@@ -117,6 +117,32 @@ void UserManager::removeUser(User *user) {
 	pthread_mutex_unlock(&m_Mutex);
 }
 
+UserManager::UserActivity UserManager::isUserActive(const std::string &username) {
+	pthread_mutex_lock(&m_Mutex);
+
+	// first check the open game rooms
+	for (std::map<int, Room*>::iterator it=m_Rooms.begin(); it!=m_Rooms.end(); ++it) {
+		// check who's the owner
+		Room *room=(*it).second;
+		if (room->getOwner()==username) {
+			pthread_mutex_unlock(&m_Mutex);
+			return RoomOwner;
+		}
+
+		// now check if the user is a participant
+		for (int i=0; i<room->getPlayers().size(); i++) {
+			if (room->getPlayers()[i]==username) {
+				pthread_mutex_unlock(&m_Mutex);
+				return Participant;
+			}
+		}
+	}
+
+	pthread_mutex_unlock(&m_Mutex);
+
+	return Idle;
+}
+
 void UserManager::broadcastChatMessage(const std::string &user, const std::string &message) {
 	pthread_mutex_lock(&m_Mutex);
 
@@ -183,11 +209,34 @@ void UserManager::sendRoomList(const std::string &user) {
 	pthread_mutex_unlock(&m_Mutex);
 }
 
-void UserManager::registerGameRoom(int gid, const std::string &owner, const Room::Type &type, const std::string &password, bool friendsOnly, const std::string &host, int port) {
+int UserManager::registerGameRoom(const std::string &owner, const std::string &password, bool friendsOnly, const Room::Rules &rules, const std::string &host, int port) {
 	pthread_mutex_lock(&m_Mutex);
 
-	Room *room=new Room(gid, owner, type, password, friendsOnly);
+	// determine the type of room
+	Room::Type roomType;
+	if (password.empty()) roomType=Room::Public;
+	else roomType=Room::Private;
+
+	// find the lowest possible id number
+	int gid=1;
+	while(1) {
+		bool found=false;
+
+		for (std::map<int, Room*>::iterator it=m_Rooms.begin(); it!=m_Rooms.end(); ++it) {
+			if ((*it).second->getGid()==gid)
+				found=true;
+		}
+
+		if (found)
+			gid++;
+
+		else if (!found)
+			break;
+	}
+
+	Room *room=new Room(gid, owner, roomType, password, friendsOnly);
 	room->setStatus(Room::Open);
+	room->setRules(rules);
 	room->setConnectionInfo(host, port);
 	m_Rooms[gid]=room;
 
@@ -198,6 +247,8 @@ void UserManager::registerGameRoom(int gid, const std::string &owner, const Room
 	}
 
 	pthread_mutex_unlock(&m_Mutex);
+
+	return gid;
 }
 
 bool UserManager::joinGameRoom(int gid, const std::string &username, const std::string &password,
@@ -239,7 +290,7 @@ bool UserManager::joinGameRoom(int gid, const std::string &username, const std::
 
 	// ok, now is this room friends-only?
 	User *owner=getOnlineUser(room->getOwner());
-	if (room->isFriendsOnly() && (owner && !owner->isFriendsWith(username))) {
+	if (room->isFriendsOnly() && (owner && owner->getUsername()!=username && !owner->isFriendsWith(username))) {
 		error="Only friends of the room owner may join.";
 		pthread_mutex_unlock(&m_Mutex);
 		return false;

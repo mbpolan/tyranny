@@ -38,9 +38,6 @@ class DBMySQL {
 		/// Determines if a user is either playing in a room, the owner of a room, or neither.
 		enum UserActivity { RoomOwner, Participant, NotActive };
 
-		/// Property redistribution method.
-		enum RedistMethod { RandomToPlayers=0, ReturnToBank };
-
 	public:
 		/**
 		 * A general exception for database problems.
@@ -214,38 +211,6 @@ class DBMySQL {
 		 * @return An code describing the results of the add request.
 		 */
 		RequestResult addUserToList(const std::string &username, const std::string &other, bool blocked) throw(DBMySQL::Exception);
-
-		/**
-		 * Determines if a user has already started a game room, or is playing in another game room.
-		 *
-		 * @param username The user to test.
-		 * @return A UserActivity result code.
-		 */
-		UserActivity isUserActive(const std::string &username) throw(DBMySQL::Exception);
-
-		/**
-		 * Creates a new record for a game room started by the given user.
-		 *
-		 * @param owner The username of the room owner.
-		 * @param maxTurns The maximum amount of game turns.
-		 * @param maxHumans The maximum number of human players.
-		 * @param freeParkingReward Money paid to the player by stepping on Free Parking.
-		 * @param redistMethod Property redistribution method following player bankruptcy.
-		 * @param incomeTaxChoice Whether or not players can choose the fee to pay on Income Tax.
-		 * @param password The room password.
-		 * @param onlyFriends Whether only friends of the owner may join the room.
-		 * @return The assigned id number of the room.
-		 */
-		int createGameRoom(const std::string &owner, int maxTurns, int maxHumans, int freeParkingReward,
-							const RedistMethod &rmethod, bool incomeTaxChoice, const std::string &password, bool onlyFriends) throw(DBMySQL::Exception);
-
-		/**
-		 * Inserts a record for a user who is participating in a game room.
-		 *
-		 * @param gid The room's id number.
-		 * @param username The user in question.
-		 */
-		void insertRoomParticipant(int gid, const std::string &username) throw(DBMySQL::Exception);
 
 	private:
 		/// The server address.

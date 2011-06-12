@@ -416,69 +416,53 @@ void Protocol::handleCreateRoom(Packet &p) {
 	std::string password=p.string();
 	char onlyFriends=p.byte();
 
-	try {
-		// connect to the database first
-		pDBMySQL db=DBMySQL::synthesize();
-
-		// see if this user already started a room, or is playing in a room now
-		DBMySQL::UserActivity activity=db->isUserActive(m_User->getUsername());
-		if (activity==DBMySQL::RoomOwner) {
-			Packet r;
-			r.addByte(LB_CREATEROOM);
-			r.addByte(PKT_ERROR);
-			r.addString("You have already started a game room.");
-			r.write(m_Socket);
-		}
-
-		else if (activity==DBMySQL::Participant) {
-			Packet r;
-			r.addByte(LB_CREATEROOM);
-			r.addByte(PKT_ERROR);
-			r.addString("You are already playing in another game room.");
-			r.write(m_Socket);
-		}
-
-		// otherwise the user is free to start a new room!
-		else {
-			DBMySQL::RedistMethod rMethod;
-			if (propertyMethod==PROP_RANDOM)
-				rMethod=DBMySQL::RandomToPlayers;
-			else
-				rMethod=DBMySQL::ReturnToBank;
-
-			// create the room in the database
-			int gid=
-			db->createGameRoom(m_User->getUsername(), maxTurns, maxHumans, freeParkReward,
-							   rMethod, incomeTaxChoice, password, onlyFriends);
-
-			// have the server pool assign this room a server
-			std::string host;
-			int port;
-			ServerPool::instance()->selectGameServer(host, port);
-
-			// register the room with the user manager
-			Room::Type roomType;
-			if (password.empty()) roomType=Room::Public;
-			else roomType=Room::Private;
-
-			std::string error;
-			UserManager::instance()->registerGameRoom(gid, m_User->getUsername(), roomType, password, onlyFriends, host, port);
-			UserManager::instance()->joinGameRoom(gid, m_User->getUsername(), password, error);
-
-			// reply to the client
-			Packet r;
-			r.addByte(LB_CREATEROOM);
-			r.addByte(PKT_SUCCESS);
-			r.addString(host);
-			r.addUint32(port);
-			r.write(m_Socket);
-		}
-
-		db->disconnect();
+	// see if this user already started a room, or is playing in a room now
+	UserManager::UserActivity activity=UserManager::instance()->isUserActive(m_User->getUsername());
+	if (activity==UserManager::RoomOwner) {
+		Packet r;
+		r.addByte(LB_CREATEROOM);
+		r.addByte(PKT_ERROR);
+		r.addString("You have already started a game room.");
+		r.write(m_Socket);
 	}
 
-	catch (const DBMySQL::Exception &ex) {
-		std::cout << "Unable to create game room: " << ex.getMessage() << std::endl;
+	else if (activity==UserManager::Participant) {
+		Packet r;
+		r.addByte(LB_CREATEROOM);
+		r.addByte(PKT_ERROR);
+		r.addString("You are already playing in another game room.");
+		r.write(m_Socket);
+	}
+
+	// otherwise the user is free to start a new room!
+	else {
+		Room::Rules::RedistMethod rMethod;
+		if (propertyMethod==PROP_RANDOM)
+			rMethod=Room::Rules::RandomToPlayers;
+		else
+			rMethod=Room::Rules::ReturnToBank;
+
+		// have the server pool assign this room a server
+		std::string host;
+		int port;
+		ServerPool::instance()->selectGameServer(host, port);
+
+		// prepare a rules object
+		Room::Rules rules(maxTurns, maxHumans, freeParkReward, incomeTaxChoice, rMethod);
+
+		std::string error;
+		int gid=UserManager::instance()->registerGameRoom(m_User->getUsername(), password, onlyFriends, rules, host, port);
+		UserManager::instance()->joinGameRoom(gid, m_User->getUsername(), password, error);
+
+		std::cout << "error: " << error << std::endl;
+
+		// reply to the client
+		Packet r;
+		r.addByte(LB_CREATEROOM);
+		r.addByte(PKT_SUCCESS);
+		r.addString(host);
+		r.addUint32(port);
+		r.write(m_Socket);
 	}
 }
 
@@ -496,11 +480,6 @@ void Protocol::handleJoinRoom(Packet &p) {
 		std::string host, error;
 		int port;
 		if (UserManager::instance()->joinGameRoom(gid, m_User->getUsername(), password, host, port, error)) {
-			// connect to the database and add a record for this participant
-			pDBMySQL db=DBMySQL::synthesize();
-			db->insertRoomParticipant(gid, m_User->getUsername());
-			db->disconnect();
-
 			r.addByte(PKT_SUCCESS);
 			r.addString(host);
 			r.addUint32(port);

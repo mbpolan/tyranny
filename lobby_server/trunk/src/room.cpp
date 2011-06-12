@@ -27,6 +27,7 @@ Room::Room(int gid, const std::string &owner, const Type &type, const std::strin
 	m_Password=password;
 	m_FriendsOnly=friendsOnly;
 	m_Owner=owner;
+	m_Rules=Rules(0, 0, 0, false, Rules::RandomToPlayers);
 }
 
 void Room::setConnectionInfo(const std::string &host, int port) {
