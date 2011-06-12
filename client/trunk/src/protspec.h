@@ -38,8 +38,8 @@
 #define REQ_ERROR			0x04
 
 /// Room parameters.
-#define PROP_RANDOM	      0x00
-#define PROP_RETURNBANK		0x01
+#define PROP_RANDOM		0x00	// property distributed randomly to players
+#define PROP_RETURNBANK		0x01	// property returned to bank
 #define ROOM_OPEN			0x02
 #define ROOM_INPROGRESS		0x03
 #define ROOM_CLOSED		0x04

@@ -144,6 +144,20 @@ void NetManager::sendCreateRoom(int maxTurns, int maxHumans, int freeParkReward,
 	p.write(m_Socket);
 }
 
+void NetManager::sendJoinRoom(int gid, const QString &password) {
+	Packet p;
+	p.addByte(LB_JOINROOM);
+	p.addUint32(gid);
+	p.addString(password);
+	p.write(m_Socket);
+}
+
+void NetManager::sendRoomListRefresh() {
+	Packet p;
+	p.addByte(LB_ROOMLIST_REFRESH);
+	p.write(m_Socket);
+}
+
 void NetManager::onError(QAbstractSocket::SocketError error) {
 	switch(error) {
 		case QAbstractSocket::ConnectionRefusedError: emit networkError("Connection refused by peer."); break;
@@ -178,6 +192,7 @@ void NetManager::parsePacket(Packet &p) {
 		case LB_FRIENDS_REQ: handleFriendListRequest(p); break;
 		case LB_BLOCKED_REQ: handleBlockedListRequest(p); break;
 		case LB_CREATEROOM: handleCreateRoomResponse(p); break;
+		case LB_JOINROOM: handleJoinRoomResponse(p); break;
 		case LB_ROOMLIST_UPD: handleRoomListUpdate(p); break;
 		case LB_ROOMLIST_REFRESH: handleRoomListRefresh(p); break;
 
@@ -270,6 +285,20 @@ void NetManager::handleCreateRoomResponse(Packet &p) {
 
 		emit joinGameServer(host, port);
 	}
+}
+
+void NetManager::handleJoinRoomResponse(Packet &p) {
+	// determine the result
+	char result=p.byte();
+	if (result==PKT_SUCCESS) {
+		QString host=p.string();
+		int port=p.uint32();
+
+		emit joinGameServer(host, port);
+	}
+
+	else
+		emit serverError(p.string());
 }
 
 void NetManager::handleRoomListUpdate(Packet &p) {

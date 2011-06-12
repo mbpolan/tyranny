@@ -94,6 +94,9 @@ class MainWindow: public QMainWindow {
 		/// Handler for context menu requests on the user list.
 		void onUserListContextMenu(const QPoint &pos);
 
+		/// Handler for context menu requests on the user list.
+		void onRoomListContextMenu(const QPoint &pos);
+
 		/// Network handler for an established connection.
 		void onNetConnected();
 
@@ -150,6 +153,11 @@ class MainWindow: public QMainWindow {
 		bool eventFilter(QObject *sender, QEvent *e);
 
 	private:
+		/**
+		 * Prepares a user to join a game room.
+		 */
+		void prepareJoinRoom();
+
 		/**
 		 * Enables or disables parts of the interface based on connectivity.
 		 *

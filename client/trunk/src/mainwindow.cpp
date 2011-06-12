@@ -20,6 +20,7 @@
 // mainwindow.cpp: implementation of the MainWindow class
 
 #include <QKeyEvent>
+#include <QInputDialog>
 #include <QMenu>
 #include <QMessageBox>
 #include <sstream>
@@ -52,9 +53,11 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent) {
 	connect(ui->actionStatistics, SIGNAL(triggered()), this, SLOT(onStatistics()));
 	connect(ui->sendButton, SIGNAL(clicked()), this, SLOT(onSendButtonClicked()));
 	connect(ui->userList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onUserListContextMenu(QPoint)));
+	connect(ui->roomList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onRoomListContextMenu(QPoint)));
 
 	// set policies
 	ui->userList->setContextMenuPolicy(Qt::CustomContextMenu);
+	ui->roomList->setContextMenuPolicy(Qt::CustomContextMenu);
 
 	// install event filters
 	ui->chatEdit->installEventFilter(this);
@@ -212,7 +215,7 @@ void MainWindow::onUserListContextMenu(const QPoint &pos) {
 	context.addAction(blockAct);
 
 	QAction *result;
-	if ((result=context.exec(mapToGlobal(pos))) && item) {
+	if ((result=context.exec(ui->userList->mapToGlobal(pos))) && item) {
 		// get the target username
 		QString username=item->text(0);
 
@@ -232,6 +235,33 @@ void MainWindow::onUserListContextMenu(const QPoint &pos) {
 			b.setColor(Qt::darkRed);
 			item->setForeground(0, b);
 		}
+	}
+}
+
+void MainWindow::onRoomListContextMenu(const QPoint &pos) {
+	// create the menu actions
+	QAction *joinAct=new QAction(tr("Join Room"), this);
+	QAction *refreshAct=new QAction(tr("Refresh"), this);
+
+	// toggle actions
+	QTreeWidgetItem *item=ui->roomList->currentItem();
+	joinAct->setEnabled((item!=NULL));
+	refreshAct->setEnabled(!m_LoggedInUser.isEmpty());
+
+	// prepare the context menu
+	QMenu context(tr("Context Menu"), this);
+	context.addAction(joinAct);
+	context.addAction(refreshAct);
+
+	QAction *result;
+	if ((result=context.exec(ui->roomList->mapToGlobal(pos)))) {
+		// join the selected room
+		if (result==joinAct)
+			prepareJoinRoom();
+
+		// refresh the room list
+		else if (result==refreshAct)
+			m_Network->sendRoomListRefresh();
 	}
 }
 
@@ -472,7 +502,34 @@ void MainWindow::onNetRoomListUpdate(const RoomData &room) {
 }
 
 void MainWindow::onNetRoomListRefresh(const QVector<RoomData> &list) {
+	// clear the room list out
+	ui->roomList->clear();
 
+	for (int i=0; i<list.size(); i++) {
+		RoomData room=list[i];
+
+		// create a new list entry
+		QTreeWidgetItem *item=new QTreeWidgetItem(ui->roomList);
+		item->setText(0, QString("%1").arg(room.getGid()));
+		item->setText(1, room.getOwner());
+		item->setText(2, QString("%1").arg(room.getPlayerCount()));
+
+		// translate room status and type into text
+		QString status, type;
+		switch(room.getStatus()) {
+			case RoomData::Open: status="Open"; break;
+			case RoomData::InProgress: status="In Progress"; break;
+			case RoomData::Closed: status="Closed"; break;
+		}
+
+		switch(room.getType()) {
+			case RoomData::Public: type="Public"; break;
+			case RoomData::Private: type="Private"; break;
+		}
+
+		item->setText(3, status);
+		item->setText(4, type);
+	}
 }
 
 bool MainWindow::eventFilter(QObject *sender, QEvent *e) {
@@ -483,6 +540,18 @@ bool MainWindow::eventFilter(QObject *sender, QEvent *e) {
 	}
 
 	return QMainWindow::eventFilter(sender, e);
+}
+
+void MainWindow::prepareJoinRoom() {
+	// get the currently selected item
+	QTreeWidgetItem *item=ui->roomList->currentItem();
+
+	// determine if its a private room, and if so, prompt for a password
+	QString password="";
+	if (item->text(4)=="Private")
+		password=QInputDialog::getText(this, tr("Authentication"), tr("Enter room password:"), QLineEdit::Password);
+
+	m_Network->sendJoinRoom(item->text(0).toInt(), password);
 }
 
 void MainWindow::toggleUi(bool connected) {

@@ -152,6 +152,19 @@ class NetManager: public QObject {
 		void sendCreateRoom(int maxTurns, int maxHumans, int freeParkReward, const RedistMethod &propMethod,
 					  bool incomeTaxChoice, const QString &password, bool onlyFriends);
 
+		/**
+		 * Sends a request to the server to join the game room with the given id number.
+		 *
+		 * @param gid The room's id number.
+		 * @param password The room's password, or empty string if none.
+		 */
+		void sendJoinRoom(int gid, const QString &password);
+
+		/**
+		 * Sends a request to the server to refresh the list of rooms.
+		 */
+		void sendRoomListRefresh();
+
 	signals:
 		/// Signal emitted when a connection is established.
 		void connected();
@@ -259,6 +272,12 @@ class NetManager: public QObject {
 		 * @param p The packet to parse.
 		 */
 		void handleCreateRoomResponse(Packet &p);
+
+		/**
+		 * Parses a packet containing the response for joining a room.
+		 * @param p The packet to parse.
+		 */
+		void handleJoinRoomResponse(Packet &p);
 
 		/**
 		 * Parses a packet containing updated data about a room.
