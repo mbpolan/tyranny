@@ -1,0 +1,9 @@
+AC_INIT(configure.in)
+
+AC_CONFIG_AUX_DIR(config)
+AM_INIT_AUTOMAKE(tyranny_game_server, 0.1)
+
+AC_LANG_CPLUSPLUS
+AC_PROG_CXX
+
+AC_OUTPUT(Makefile src/Makefile)

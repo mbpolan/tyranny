@@ -1,0 +1,5 @@
+<game-server-config>
+	<id>Game Server 1</id>
+	<ip>127.0.0.1</ip>
+	<port>9191</port>
+</game-server-config>
