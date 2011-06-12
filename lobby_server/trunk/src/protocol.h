@@ -85,6 +85,13 @@ class Protocol {
 		 */
 		void sendRoomUpdate(const Room *room);
 
+		/**
+		 * Sends the user a list of current rooms.
+		 *
+		 * @param list A vector of pointers to Room objects.
+		 */
+		void sendRoomList(const std::vector<Room*> &list);
+
 	private:
 		/**
 		 * Parses and evaluates a given packet.
@@ -147,6 +154,18 @@ class Protocol {
 		 * @param p The packet to parse.
 		 */
 		void handleCreateRoom(Packet &p);
+
+		/**
+		 * Handler for joining a game room.
+		 * @param p The packet to parse.
+		 */
+		void handleJoinRoom(Packet &p);
+
+		/**
+		 * Handler for refreshing a room list.
+		 * @param p The packet to parse.
+		 */
+		void handleRoomListRefresh(Packet &p);
 
 		/**
 		 * Handler for creating a game room.

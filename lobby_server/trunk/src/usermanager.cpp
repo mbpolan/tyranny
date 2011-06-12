@@ -168,10 +168,25 @@ void UserManager::sendUserStatusUpdate(const std::string &user, const std::strin
 	pthread_mutex_unlock(&m_Mutex);
 }
 
-void UserManager::registerGameRoom(int gid, const std::string &owner, const Room::Type &type, const std::string &host, int port) {
+void UserManager::sendRoomList(const std::string &user) {
 	pthread_mutex_lock(&m_Mutex);
 
-	Room *room=new Room(gid, owner, type);
+	User *toWhom=m_UserMap[user];
+	if (toWhom) {
+		std::vector<Room*> list;
+		for (std::map<int, Room*>::iterator it=m_Rooms.begin(); it!=m_Rooms.end(); ++it)
+			list.push_back((*it).second);
+
+		toWhom->getProtocol()->sendRoomList(list);
+	}
+
+	pthread_mutex_unlock(&m_Mutex);
+}
+
+void UserManager::registerGameRoom(int gid, const std::string &owner, const Room::Type &type, const std::string &password, bool friendsOnly, const std::string &host, int port) {
+	pthread_mutex_lock(&m_Mutex);
+
+	Room *room=new Room(gid, owner, type, password, friendsOnly);
 	room->setStatus(Room::Open);
 	room->setConnectionInfo(host, port);
 	m_Rooms[gid]=room;
@@ -183,4 +198,94 @@ void UserManager::registerGameRoom(int gid, const std::string &owner, const Room
 	}
 
 	pthread_mutex_unlock(&m_Mutex);
+}
+
+bool UserManager::joinGameRoom(int gid, const std::string &username, const std::string &password,
+							   std::string &host, int &port, std::string &error) {
+	pthread_mutex_lock(&m_Mutex);
+
+	// we must check all conditions... first, does this room even exist?
+	if (m_Rooms.find(gid)==m_Rooms.end()) {
+		error="There is no such room with the given id number.";
+		pthread_mutex_unlock(&m_Mutex);
+		return false;
+	}
+
+	Room *room=m_Rooms[gid];
+
+	// make sure people who are already in the room don't join it again
+	std::vector<std::string> players=room->getPlayers();
+	for (int i=0; i<players.size(); i++) {
+		if (players[i]==username) {
+			error="You are already part of this game room.";
+			pthread_mutex_unlock(&m_Mutex);
+			return false;
+		}
+	}
+
+	// users cannot join multiple rooms either
+	for (std::map<int, Room*>::iterator it=m_Rooms.begin(); it!=m_Rooms.end(); ++it) {
+		if ((*it).second==room)
+			continue;
+
+		for (int i=0; i<(*it).second->getPlayers().size(); i++) {
+			if ((*it).second->getPlayers()[i]==username) {
+				error="You cannot join more than one game room.";
+				pthread_mutex_unlock(&m_Mutex);
+				return false;
+			}
+		}
+	}
+
+	// ok, now is this room friends-only?
+	User *owner=getOnlineUser(room->getOwner());
+	if (room->isFriendsOnly() && (owner && !owner->isFriendsWith(username))) {
+		error="Only friends of the room owner may join.";
+		pthread_mutex_unlock(&m_Mutex);
+		return false;
+	}
+
+	// is the room full already?
+	if (room->getPlayers().size()==4) {
+		error="This room is already full.";
+		pthread_mutex_unlock(&m_Mutex);
+		return false;
+	}
+
+	// does it have an owner-defined password?
+	if (room->getPassword()!=password) {
+		error="Incorrect room password.";
+		pthread_mutex_unlock(&m_Mutex);
+		return false;
+	}
+
+	// if we're still here, then that means the user can join the room
+	room->addPlayer(username);
+	room->getConnectionInfo(host, port);
+
+	// alert all clients of the room update
+	for (std::map<std::string, User*>::iterator it=m_UserMap.begin(); it!=m_UserMap.end(); ++it) {
+		User *other=(*it).second;
+		other->getProtocol()->sendRoomUpdate(room);
+	}
+
+	pthread_mutex_unlock(&m_Mutex);
+
+	return true;
+}
+
+
+bool UserManager::joinGameRoom(int gid, const std::string &username, const std::string &password, std::string &error) {
+	std::string host;
+	int port;
+
+	return joinGameRoom(gid, username, password, host, port, error);
+}
+
+User* UserManager::getOnlineUser(const std::string &username) const {
+	std::map<std::string, User*>::const_iterator it=m_UserMap.find(username);
+	if (it==m_UserMap.end())
+		return NULL;
+
+	return (*it).second;
 }

@@ -21,10 +21,12 @@
 
 #include "room.h"
 
-Room::Room(int gid, const std::string &owner, const Type &type) {
+Room::Room(int gid, const std::string &owner, const Type &type, const std::string &password, bool friendsOnly) {
 	m_Gid=gid;
-	m_Owner=owner;
 	m_Type=type;
+	m_Password=password;
+	m_FriendsOnly=friendsOnly;
+	m_Owner=owner;
 }
 
 void Room::setConnectionInfo(const std::string &host, int port) {

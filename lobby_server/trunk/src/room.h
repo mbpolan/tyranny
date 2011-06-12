@@ -38,9 +38,12 @@ class Room {
 		 * Creates an empty room with the given id number and owner.
 		 *
 		 * @param gid The room id number.
-		 * @owner The room owner.
+		 * @param The room owner.
+		 * @param type What kind of room this is.
+		 * @param password The room password, or an empty string if none.
+		 * @param friendsOnly Whether or not only friends of the owner may join.
 		 */
-		Room(int gid, const std::string &owner, const Type &type);
+		Room(int gid, const std::string &owner, const Type &type, const std::string &password, bool friendsOnly);
 
 		/**
 		 * Sets the connection details for hosting this room.
@@ -78,6 +81,20 @@ class Room {
 		 * @return The room's type.
 		 */
 		Type getType() const { return m_Type; }
+
+		/**
+		 * Returns the room's password.
+		 *
+		 * @return The password for this room.
+		 */
+		std::string getPassword() const { return m_Password; }
+
+		/**
+		 * Returns whether or not this room is for the friends of the owner only.
+		 *
+		 * @return true if yes, false otherwise.
+		 */
+		bool isFriendsOnly() const { return m_FriendsOnly; }
 
 		/**
 		 * Sets the room's status.
@@ -118,11 +135,11 @@ class Room {
 		/// The id number of the room.
 		int m_Gid;
 
-		/// The owner of the room.
-		std::string m_Owner;
-
 		/// The type of room.
 		Type m_Type;
+
+		/// The owner of this room.
+		std::string m_Owner;
 
 		/// The status of the room.
 		Status m_Status;
@@ -132,6 +149,12 @@ class Room {
 
 		/// The port of the hosting server.
 		int m_Port;
+
+		/// The room password, if any.
+		std::string m_Password;
+
+		/// Whether or not the room is for owner friends only.
+		bool m_FriendsOnly;
 
 		/// List of players in the room.
 		std::vector<std::string> m_Players;

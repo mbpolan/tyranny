@@ -95,6 +95,19 @@ void DBMySQL::disconnect() throw(DBMySQL::Exception) {
 	m_Handle=NULL;
 }
 
+void DBMySQL::prepare() throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// first clean the rooms table
+	if (mysql_query(m_Handle, "DELETE FROM rooms"))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+
+	// now clean the participants table
+	if (mysql_query(m_Handle, "DELETE FROM participants"))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
+}
+
 bool DBMySQL::authenticate(const std::string &username, const std::string &password) throw(DBMySQL::Exception) {
 	if (!m_Handle)
 		throw DBMySQL::Exception("There is no current connection.");
@@ -417,4 +430,18 @@ int DBMySQL::createGameRoom(const std::string &owner, int maxTurns, int maxHuman
 	int gid=atoi(row[0]);
 	mysql_free_result(result);
 	return gid;
+}
+
+void DBMySQL::insertRoomParticipant(int gid, const std::string &username) throw(DBMySQL::Exception) {
+	if (!m_Handle)
+		throw DBMySQL::Exception("There is no current connection.");
+
+	// form the sql string
+	std::stringstream ss;
+	ss << "INSERT INTO participants VALUES((SELECT uid FROM users WHERE username='";
+	ss << username << "'), " << gid << ")";
+
+	// query the server
+	if (mysql_query(m_Handle, ss.str().c_str()))
+		throw DBMySQL::Exception("Unable to complete database query: "+std::string(mysql_error(m_Handle)));
 }

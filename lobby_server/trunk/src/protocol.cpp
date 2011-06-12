@@ -99,6 +99,38 @@ void Protocol::sendRoomUpdate(const Room *room) {
 	p.write(m_Socket);
 }
 
+void Protocol::sendRoomList(const std::vector<Room*> &list) {
+	Packet p;
+	p.addByte(LB_ROOMLIST_REFRESH);
+	p.addUint32(list.size());
+
+	for (int i=0; i<list.size(); i++) {
+		Room *room=list[i];
+
+		// translate both room status and type into protocol bytes
+		char st, ty;
+		switch(room->getStatus()) {
+			case Room::Open: st=ROOM_OPEN; break;
+			case Room::InProgress: st=ROOM_INPROGRESS; break;
+			case Room::Closed: st=ROOM_CLOSED; break;
+		}
+
+		switch(room->getType()) {
+			case Room::Public: ty=ROOM_PUBLIC; break;
+			case Room::Private: ty=ROOM_PRIVATE; break;
+		}
+
+		// add this room's data to the packet
+		p.addUint32(room->getGid());
+		p.addString(room->getOwner());
+		p.addUint16(room->getPlayers().size());
+		p.addByte(st);
+		p.addByte(ty);
+	}
+
+	p.write(m_Socket);
+}
+
 void Protocol::parsePacket(Packet &p) {
 	uint8_t header=p.byte();
 	switch(header) {
@@ -134,6 +166,12 @@ void Protocol::parsePacket(Packet &p) {
 
 		// user asked to create a room
 		case LB_CREATEROOM: handleCreateRoom(p); break;
+
+		// user wants to join a game room
+		case LB_JOINROOM: handleJoinRoom(p); break;
+
+		// user requested an updated room list
+		case LB_ROOMLIST_REFRESH: handleRoomListRefresh(p); break;
 
 		default: std::cout << "** Unknown packet header: " << header << std::endl; break;
 	}
@@ -423,7 +461,9 @@ void Protocol::handleCreateRoom(Packet &p) {
 			if (password.empty()) roomType=Room::Public;
 			else roomType=Room::Private;
 
-			UserManager::instance()->registerGameRoom(gid, m_User->getUsername(), roomType, host, port);
+			std::string error;
+			UserManager::instance()->registerGameRoom(gid, m_User->getUsername(), roomType, password, onlyFriends, host, port);
+			UserManager::instance()->joinGameRoom(gid, m_User->getUsername(), password, error);
 
 			// reply to the client
 			Packet r;
@@ -440,4 +480,45 @@ void Protocol::handleCreateRoom(Packet &p) {
 	catch (const DBMySQL::Exception &ex) {
 		std::cout << "Unable to create game room: " << ex.getMessage() << std::endl;
 	}
+}
+
+void Protocol::handleJoinRoom(Packet &p) {
+	// get the data from the packet
+	int gid=p.uint32();
+	std::string password=p.string();
+
+	try {
+		// prepare response packet
+		Packet r;
+		r.addByte(LB_JOINROOM);
+
+		// try to join the room
+		std::string host, error;
+		int port;
+		if (UserManager::instance()->joinGameRoom(gid, m_User->getUsername(), password, host, port, error)) {
+			// connect to the database and add a record for this participant
+			pDBMySQL db=DBMySQL::synthesize();
+			db->insertRoomParticipant(gid, m_User->getUsername());
+			db->disconnect();
+
+			r.addByte(PKT_SUCCESS);
+			r.addString(host);
+			r.addUint32(port);
+		}
+
+		else {
+			r.addByte(PKT_ERROR);
+			r.addString(error);
+		}
+
+		r.write(m_Socket);
+	}
+
+	catch (const DBMySQL::Exception &ex) {
+		std::cout << "Unable to join game room: " << ex.getMessage() << std::endl;
+	}
+}
+
+void Protocol::handleRoomListRefresh(Packet &p) {
+	UserManager::instance()->sendRoomList(m_User->getUsername());
 }
