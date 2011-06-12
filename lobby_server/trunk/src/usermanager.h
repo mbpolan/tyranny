@@ -31,6 +31,10 @@
 
 class UserManager {
 	public:
+		/// Determines a user's activity.
+		enum UserActivity { RoomOwner, Participant, Idle };
+
+	public:
 		/// Default constructor.
 		UserManager();
 
@@ -62,6 +66,14 @@ class UserManager {
 		void removeUser(User *user);
 
 		/**
+		 * Determines if a user is the owner of a room, a participant, or idle.
+		 *
+		 * @param username The user to test.
+		 * @return An activity code.
+		 */
+		UserActivity isUserActive(const std::string &username);
+
+		/**
 		 * Sends a chat message to all clients from another user.
 		 *
 		 * @param user The user who sent the message.
@@ -88,16 +100,16 @@ class UserManager {
 		/**
 		 * Opens a new game room with the given parameters, and sends an update to all clients.
 		 *
-		 * @param gid The room id number.
 		 * @param owner The room's owner.
-		 * @param type The room type.
 		 * @param password The room's password.
 		 * @param friendsOnly Whether or not only friends of the owner may join.
+		 * @param rules The rules for this room.
 		 * @param host The hostname/IP address of the game server hosting this room.
 		 * @param port The port of the hosting game server.
+		 * @return The assigned id number for this room
 		 */
-		void registerGameRoom(int gid, const std::string &owner, const Room::Type &type,
-							  const std::string &password, bool friendsOnly, const std::string &host, int port);
+		int registerGameRoom(const std::string &owner, const std::string &password, bool friendsOnly,
+							 const Room::Rules &rules, const std::string &host, int port);
 
 		/**
 		 * Attempts to join the given user to the game room with id number gid.
