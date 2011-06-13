@@ -86,6 +86,13 @@ class Protocol {
 		void sendRoomUpdate(const Room *room);
 
 		/**
+		 * Sends this user a message that the given game room has been removed.
+		 *
+		 * @param gid The room's id number.
+		 */
+		void sendRoomDelete(int gid);
+
+		/**
 		 * Sends the user a list of current rooms.
 		 *
 		 * @param list A vector of pointers to Room objects.

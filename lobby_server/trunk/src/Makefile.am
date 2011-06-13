@@ -1,5 +1,6 @@
 bin_PROGRAMS = tyranny_lobby_server
 tyranny_lobby_server_SOURCES = \
+	clientsocket.cpp clientsocket.h \
 	configfile.cpp configfile.h \
 	dbmysql.cpp dbmysql.h \
 	lobbyserver.cpp lobbyserver.h \

@@ -112,6 +112,13 @@ class UserManager {
 							 const Room::Rules &rules, const std::string &host, int port);
 
 		/**
+		 * Unregisters and removes the game room with the given id.
+		 *
+		 * @param gid The target room's id number.
+		 */
+		void unregisterGameRoom(int gid);
+
+		/**
 		 * Attempts to join the given user to the game room with id number gid.
 		 * In the case that this method fails, due to whatever reason, the parameters host and port will
 		 * not be set to anything, and instead, only error will be set to a string value describing
