@@ -17,36 +17,16 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
- 
- #ifndef GAMESERVER_H
- #define GAMESERVER_H
+// protspec.h: definition of the game server protocol.
 
-#include "packet.h"
- 
- // the current version of the server
- #define GAME_SERVER_VERSION	"0.1"
- 
-/**
- * Callback for handling client connections.
- * The arg parameter is a pointer to a ServerSocket::Client pointer.
- */
-void* connectionHandler(void *arg);
+#ifndef PROTSPEC_H
+#define PROTSPEC_H
 
-/**
- * Handles dealing with a connection from a lobby server.
- *
- * @param p The initial packet sent by the server.
- * @param socket The socket the lobby server is connecting to.
- */
-void handleLobbyServerConnection(Packet &p, int socket);
+/// Types of incoming connections.
+#define CONN_CLIENT		0x00
+#define CONN_LOBBY		0x01
 
-/**
- * Handles dealing with a connection from a client.
- *
- * @param p The initial packet sent by the client.
- * @param socket The socket the client is connecting to.
- */
-void handleClientConnection(Packet &p, int socket);
- 
- #endif
- 
+/// Inter-server communication.
+#define IS_OPENROOM		0x00
+
+#endif
