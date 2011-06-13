@@ -22,6 +22,10 @@
 #ifndef PROTSPEC_H
 #define PROTSPEC_H
 
+/// Types of connections
+#define CONN_CLIENT			0x00
+#define CONN_LOBBY			0x01
+
 /// General codes.
 #define PKT_ERROR			0x00
 #define PKT_SUCCESS			0x01
@@ -37,6 +41,10 @@
 #define REQ_SUCCESS			0x03
 #define REQ_ERROR			0x04
 
+/// Actions for changes to the list of rooms.
+#define LB_ROOM_UPDATE		0x00
+#define LB_ROOM_DELETE		0x01
+
 /// Room parameters.
 #define PROP_RANDOM			0x00	// property distributed randomly to players
 #define PROP_RETURNBANK		0x01	// property returned to bank
@@ -45,6 +53,9 @@
 #define ROOM_CLOSED			0x04
 #define ROOM_PUBLIC			0x05
 #define ROOM_PRIVATE		0x06
+
+/// Inter-server communication.
+#define IS_OPENROOM			0x00	// create a room on the game server
 
 /****************************************************************************/
 

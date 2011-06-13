@@ -19,6 +19,7 @@
  ***************************************************************************/
 // protocol.cpp: implementation of the Protocol class.
 
+#include "clientsocket.h"
 #include "configfile.h"
 #include "dbmysql.h"
 #include "packet.h"
@@ -91,11 +92,20 @@ void Protocol::sendRoomUpdate(const Room *room) {
 
 	Packet p;
 	p.addByte(LB_ROOMLIST_UPD);
+	p.addByte(LB_ROOM_UPDATE);
 	p.addUint32(room->getGid());
 	p.addString(room->getOwner());
 	p.addUint16(room->getPlayers().size());
 	p.addByte(st);
 	p.addByte(ty);
+	p.write(m_Socket);
+}
+
+void Protocol::sendRoomDelete(int gid) {
+	Packet p;
+	p.addByte(LB_ROOMLIST_UPD);
+	p.addByte(LB_ROOM_DELETE);
+	p.addUint32(gid);
 	p.write(m_Socket);
 }
 
@@ -450,11 +460,50 @@ void Protocol::handleCreateRoom(Packet &p) {
 		// prepare a rules object
 		Room::Rules rules(maxTurns, maxHumans, freeParkReward, incomeTaxChoice, rMethod);
 
-		std::string error;
+		// register a new game room
 		int gid=UserManager::instance()->registerGameRoom(m_User->getUsername(), password, onlyFriends, rules, host, port);
-		UserManager::instance()->joinGameRoom(gid, m_User->getUsername(), password, error);
 
-		std::cout << "error: " << error << std::endl;
+		// establish a connection to the game server
+		try {
+			ClientSocket sock;
+			sock.connect(host, port);
+
+			// send a packet to open a new room
+			Packet gs;
+			gs.addByte(CONN_LOBBY);
+			gs.addByte(IS_OPENROOM);
+			gs.addUint32(gid);
+			gs.addString(m_User->getUsername());
+			gs.addByte(onlyFriends ? 0x00 : 0x01);
+			gs.addUint32(maxTurns);
+			gs.addUint16(maxHumans);
+			gs.addUint32(freeParkReward);
+			gs.addByte(incomeTaxChoice ? 0x00 : 0x01);
+			gs.addByte(propertyMethod);
+
+			gs.write(sock.getFD());
+			sock.disconnect();
+		}
+
+		catch (const ClientSocket::Exception &ex) {
+			std::cout << "Unable to communicate with game server: " << ex.getMessage() << std::endl;
+
+			// unregister the room
+			UserManager::instance()->unregisterGameRoom(gid);
+
+			// since we can't get in touch with the game server, error out
+			Packet r;
+			r.addByte(LB_CREATEROOM);
+			r.addByte(PKT_ERROR);
+			r.addString("Unable to connect to game server. Contact an administrator.");
+			r.write(m_Socket);
+
+			return;
+		}
+
+		// make sure to join the owner into the room
+		std::string error;
+		UserManager::instance()->joinGameRoom(gid, m_User->getUsername(), password, error);
 
 		// reply to the client
 		Packet r;

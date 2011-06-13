@@ -251,6 +251,29 @@ int UserManager::registerGameRoom(const std::string &owner, const std::string &p
 	return gid;
 }
 
+void UserManager::unregisterGameRoom(int gid) {
+	pthread_mutex_lock(&m_Mutex);
+
+	if (m_Rooms.find(gid)==m_Rooms.end()) {
+		pthread_mutex_unlock(&m_Mutex);
+		return;
+	}
+
+	// remove the given room
+	Room *room=m_Rooms[gid];
+	m_Rooms.erase(gid);
+
+	delete room;
+
+	// inform the clients
+	for (std::map<std::string, User*>::iterator it=m_UserMap.begin(); it!=m_UserMap.end(); ++it) {
+		User *other=(*it).second;
+		other->getProtocol()->sendRoomDelete(gid);
+	}
+
+	pthread_mutex_unlock(&m_Mutex);
+}
+
 bool UserManager::joinGameRoom(int gid, const std::string &username, const std::string &password,
 							   std::string &host, int &port, std::string &error) {
 	pthread_mutex_lock(&m_Mutex);
