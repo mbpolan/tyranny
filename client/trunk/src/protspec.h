@@ -37,6 +37,10 @@
 #define REQ_SUCCESS		0x03
 #define REQ_ERROR			0x04
 
+/// Actions for changes to the list of rooms.
+#define LB_ROOM_UPDATE		0x00
+#define LB_ROOM_DELETE		0x01
+
 /// Room parameters.
 #define PROP_RANDOM		0x00	// property distributed randomly to players
 #define PROP_RETURNBANK		0x01	// property returned to bank

@@ -302,30 +302,42 @@ void NetManager::handleJoinRoomResponse(Packet &p) {
 }
 
 void NetManager::handleRoomListUpdate(Packet &p) {
-	// gather the data
-    	int gid=p.uint32();
-	QString owner=p.string();
-	int pcount=p.uint16();
-	char status=p.byte();
-	char type=p.byte();
+	// determine the nature of this update
+	char request=p.byte();
 
-	// translate the status and type bytes
-	RoomData::Status st;
-	RoomData::Type ty;
+	// add or update existing room
+	if (request==LB_ROOM_UPDATE) {
+		// gather the data
+		int gid=p.uint32();
+		QString owner=p.string();
+		int pcount=p.uint16();
+		char status=p.byte();
+		char type=p.byte();
 
-	switch(status) {
-		default: st=RoomData::Open; break;
-		case ROOM_INPROGRESS: st=RoomData::InProgress; break;
-		case ROOM_CLOSED: st=RoomData::Closed; break;
+		// translate the status and type bytes
+		RoomData::Status st;
+		RoomData::Type ty;
+
+		switch(status) {
+			default: st=RoomData::Open; break;
+			case ROOM_INPROGRESS: st=RoomData::InProgress; break;
+			case ROOM_CLOSED: st=RoomData::Closed; break;
+		}
+
+		switch(type) {
+			default: ty=RoomData::Public; break;
+			case ROOM_PRIVATE: ty=RoomData::Private; break;
+		}
+
+		RoomData data(gid, owner, pcount, st, ty);
+		emit roomListUpdate(data);
 	}
 
-	switch(type) {
-		default: ty=RoomData::Public; break;
-		case ROOM_PRIVATE: ty=RoomData::Private; break;
+	// delete a room
+	else {
+		int gid=p.uint32();
+		emit roomListDelete(gid);
 	}
-
-	RoomData data(gid, owner, pcount, st, ty);
-	emit roomListUpdate(data);
 }
 
 void NetManager::handleRoomListRefresh(Packet &p) {

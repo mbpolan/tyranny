@@ -145,6 +145,9 @@ class MainWindow: public QMainWindow {
 		/// Network handler for updating a room.
 		void onNetRoomListUpdate(const RoomData &room);
 
+		/// Network handler for removing old rooms.
+		void onNetRoomListDelete(int gid);
+
 		/// Network handler for updating the entire list of rooms.
 		void onNetRoomListRefresh(const QVector<RoomData> &list);
 

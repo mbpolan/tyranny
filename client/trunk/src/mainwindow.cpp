@@ -88,8 +88,10 @@ MainWindow::~MainWindow() {
 
 void MainWindow::onConnect() {
 	// do not even try to connect if no preferences data is given
-	if (!m_PrefData)
+	if (!m_PrefData) {
+		QMessageBox::warning(this, tr("Warning"), tr("You need to set connection details in File -> Preferences first."));
 		return;
+	}
 
 	// allocate a new network manager if needed
 	if (m_Network)
@@ -114,6 +116,7 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(serverError(QString)), this, SLOT(onNetErrorMessage(QString)));
 	connect(m_Network, SIGNAL(joinGameServer(QString,int)), this, SLOT(onNetJoinGameServer(QString,int)));
 	connect(m_Network, SIGNAL(roomListUpdate(RoomData)), this, SLOT(onNetRoomListUpdate(RoomData)));
+	connect(m_Network, SIGNAL(roomListDelete(int)), this, SLOT(onNetRoomListDelete(int)));
 	connect(m_Network, SIGNAL(roomListRefresh(QVector<RoomData>)), this, SLOT(onNetRoomListRefresh(QVector<RoomData>)));
 
 	m_Network->connectToServer(m_PrefData->getIP(), m_PrefData->getPort());
@@ -440,11 +443,8 @@ void MainWindow::onNetErrorMessage(const QString &msg) {
 }
 
 void MainWindow::onNetJoinGameServer(const QString &host, int port) {
-	// TODO: activate game window and start new protocol
-	std::stringstream ss;
-	ss << "Connect to game server at " << host.toStdString() << ":" << port;
-
-	QMessageBox::information(this, tr("Stub Connection Info"), ss.str().c_str());
+	// create a new tcp socket and attempt to connect to the game server
+	//QTcpSocket *socket=new QTcpSocket();
 }
 
 void MainWindow::onNetRoomListUpdate(const RoomData &room) {
@@ -499,6 +499,15 @@ void MainWindow::onNetRoomListUpdate(const RoomData &room) {
 
 	item->setText(3, status);
 	item->setText(4, type);
+}
+
+void MainWindow::onNetRoomListDelete(int gid) {
+	// find the target room by id
+	for (int i=0; i<ui->roomList->topLevelItemCount(); i++) {
+		QTreeWidgetItem *item=ui->roomList->topLevelItem(i);
+		if (item->text(0).toInt()==gid)
+			delete ui->roomList->takeTopLevelItem(i);
+	}
 }
 
 void MainWindow::onNetRoomListRefresh(const QVector<RoomData> &list) {
