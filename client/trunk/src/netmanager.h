@@ -214,6 +214,9 @@ class NetManager: public QObject {
 		/// Signal emitted when updated data about a room is available.
 		void roomListUpdate(const RoomData &data);
 
+		/// Signal emitted when a room is to be removed from the room list.
+		void roomListDelete(int gid);
+
 		/// Signal emitted when a list of rooms is available.
 		void roomListRefresh(const QVector<RoomData> &list);
 
