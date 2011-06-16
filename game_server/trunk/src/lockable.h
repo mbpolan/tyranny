@@ -17,23 +17,41 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the game server protocol.
+// lockable.h: definition and implementation of the Lockable interface class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#ifndef LOCKABLE_H
+#define LOCKABLE_H
 
-/// Types of incoming connections.
-#define CONN_CLIENT		0x00
-#define CONN_LOBBY		0x01
+#include <pthread.h>
 
-/// Inter-server communication.
-#define IS_OPENROOM		0x00
+/*
+ * An interface class for objects that are thread-safe.
+ * Any class that inherits Lockable is deemed "thread-safe," because
+ * of the fact that this class provides an internal mutex that can be
+ * locked or unlocked. Derived classes still have the responsibility
+ * of carefully managing their locks, as deadlocks are easy to create
+ * and very difficult to track down.
+ */
+class Lockable {
+	public:
+		/// Initializes the mutex lock.
+		Lockable() {
+			pthread_mutex_init(&m_Mutex, NULL);
+		}
 
-/// Room parameters.
-#define PROP_RANDOM			0x00	// property distributed randomly to players
-#define PROP_RETURNBANK		0x01	// property returned to bank
+		/// Frees memory associated with this mutex.
+		~Lockable() {
+			pthread_mutex_destroy(&m_Mutex);
+		}
 
-/*************************************************************************/
+		/// Locks the mutex.
+		void lock() { pthread_mutex_lock(&m_Mutex); }
 
+		/// Unlocks the mutex.
+		void unlock() { pthread_mutex_unlock(&m_Mutex); }
+
+	private:
+		pthread_mutex_t m_Mutex;
+};
 
 #endif

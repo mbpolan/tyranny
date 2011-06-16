@@ -17,23 +17,42 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the game server protocol.
+// human.h: definition of the Human class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#ifndef HUMAN_H
+#define HUMAN_H
 
-/// Types of incoming connections.
-#define CONN_CLIENT		0x00
-#define CONN_LOBBY		0x01
+#include <iostream>
 
-/// Inter-server communication.
-#define IS_OPENROOM		0x00
+#include "player.h"
 
-/// Room parameters.
-#define PROP_RANDOM			0x00	// property distributed randomly to players
-#define PROP_RETURNBANK		0x01	// property returned to bank
+/**
+ * A model for a human player.
+ * Human players have distinct attributes that this class keeps track of, namely
+ * the socket that the user is connected on, and the user's username. Moreover, special
+ * methods for dealing with the client are included, including the ability to chat, wait
+ * on moves, and more.
+ */
+class Human: public Player {
+	public:
+		/**
+		 * Creates a human player model with the given username and socket.
+		 *
+		 * @param username The human player's username.
+		 * @param socket The socket the player connected with.
+		 */
+		Human(const std::string &username, int socket);
 
-/*************************************************************************/
+		/**
+		 * Returns the player's socket file descriptor.
+		 *
+		 * @return A file descriptor.
+		 */
+		int getSocket() const { return m_Socket; }
 
+	private:
+		/// The communications socket.
+		int m_Socket;
+};
 
 #endif
