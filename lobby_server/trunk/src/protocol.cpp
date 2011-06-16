@@ -509,6 +509,7 @@ void Protocol::handleCreateRoom(Packet &p) {
 		Packet r;
 		r.addByte(LB_CREATEROOM);
 		r.addByte(PKT_SUCCESS);
+		r.addUint32(gid);
 		r.addString(host);
 		r.addUint32(port);
 		r.write(m_Socket);
@@ -530,6 +531,7 @@ void Protocol::handleJoinRoom(Packet &p) {
 		int port;
 		if (UserManager::instance()->joinGameRoom(gid, m_User->getUsername(), password, host, port, error)) {
 			r.addByte(PKT_SUCCESS);
+			r.addUint32(gid);
 			r.addString(host);
 			r.addUint32(port);
 		}
