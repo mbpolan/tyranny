@@ -27,16 +27,17 @@
 #include "configfile.h"
 #include "gameserver.h"
 #include "protspec.h"
+#include "room.h"
+#include "roomengine.h"
 #include "serversocket.h"
  
 // globals
 ConfigFile *g_ConfigFile=NULL;
+RoomEngine *g_Engine=NULL;
 
 void* connectionHandler(void *arg) {
 	ServerSocket::Client *data=(ServerSocket::Client*) arg;
 	int socket=data->getSocket();
-
-	std::cout << "Accepted client connection on " << data->getIP() << ":" << data->getPort() << std::endl;
 
 	// read an initial packet
 	Packet p;
@@ -49,17 +50,26 @@ void* connectionHandler(void *arg) {
 	uint8_t header=p.byte();
 
 	// a client is attempting to connect
-	if (header==CONN_CLIENT)
+	if (header==CONN_CLIENT) {
+		std::cout << "Accepted client connection on " << data->getIP() << ":" << data->getPort() << std::endl;
 		handleClientConnection(p, socket);
+	}
 
 	// the parent lobby server is attempting to connect
-	else if (header==CONN_LOBBY)
+	else if (header==CONN_LOBBY) {
+		std::cout << "Accepted lobby server connection on " << data->getIP() << ":" << data->getPort() << std::endl;
+
 		handleLobbyServerConnection(p, socket);
 
+		std::cout << "Disconnected lobby server connection on socket " << socket << std::endl;
 
-	std::cout << "Disconnected client on socket " << socket << std::endl;
+		close(socket);
+	}
 
-	close(socket);
+	else {
+		std::cout << "Rejecting connecton from " << data->getIP() << ":" << data->getPort() << " (unknown source)\n";
+		close(socket);
+	}
 
 	delete data;
 	pthread_exit(0);
@@ -81,12 +91,35 @@ void handleLobbyServerConnection(Packet &p, int socket) {
 		char incomeTaxChoice=p.byte();
 		char propMethod=p.byte();
 
-		std::cout << "Open a room with gid " << gid << std::endl;
+		// translate packet bytes to enums
+		Room::Rules::RedistMethod rmethod;
+		if (propMethod==PROP_RANDOM)
+			rmethod=Room::Rules::RandomToPlayers;
+		else
+			rmethod=Room::Rules::ReturnToBank;
+
+		// allocate a new room
+		Room *room=new Room(gid, owner);
+		Room::Rules rules(maxTurns, maxHumans, freeParkReward, (incomeTaxChoice==0x01), rmethod);
+
+		room->setRules(rules);
+		RoomEngine::instance()->openRoom(room);
+
+		std::cout << "Opened a room with gid " << gid << std::endl;
 	}
 }
 
 void handleClientConnection(Packet &p, int socket) {
+	// get the client's username and target room id
+	std::string username=p.string();
+	int gid=p.uint32();
 
+	std::cout << username << " wants to join room " << gid << std::endl;
+
+	std::string error;
+	if (!RoomEngine::instance()->addPlayerToRoom(gid, username, socket, error)) {
+		std::cout << "ERROR: " << error << std::endl;
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -105,6 +138,13 @@ int main(int argc, char *argv[]) {
 
 		exit(1);
 	}
+
+	std::cout << "[done]\n";
+
+	std::cout << "Creating room engine...\t";
+
+	// create the room engine
+	g_Engine=new RoomEngine();
 
 	std::cout << "[done]\n";
 

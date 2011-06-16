@@ -17,23 +17,10 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the game server protocol.
+// player.cpp: implementation of the Player class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#include "player.h"
 
-/// Types of incoming connections.
-#define CONN_CLIENT		0x00
-#define CONN_LOBBY		0x01
-
-/// Inter-server communication.
-#define IS_OPENROOM		0x00
-
-/// Room parameters.
-#define PROP_RANDOM			0x00	// property distributed randomly to players
-#define PROP_RETURNBANK		0x01	// property returned to bank
-
-/*************************************************************************/
-
-
-#endif
+Player::Player(const std::string &username) {
+	m_Username=username;
+}

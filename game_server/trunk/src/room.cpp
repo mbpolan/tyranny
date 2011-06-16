@@ -17,23 +17,58 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the game server protocol.
+// room.cpp: implementation of the Room class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#include "room.h"
 
-/// Types of incoming connections.
-#define CONN_CLIENT		0x00
-#define CONN_LOBBY		0x01
+Room::Room(int gid, const std::string &owner) {
+	m_Gid=gid;
+	m_Owner=owner;
+	m_Rules=Rules(0, 0, 0, false, Rules::RandomToPlayers);
+}
 
-/// Inter-server communication.
-#define IS_OPENROOM		0x00
+void Room::setRules(const Room::Rules &rules) {
+	lock();
+	m_Rules=rules;
+	unlock();
+}
 
-/// Room parameters.
-#define PROP_RANDOM			0x00	// property distributed randomly to players
-#define PROP_RETURNBANK		0x01	// property returned to bank
+Room::Rules Room::getRules() {
+	Room::Rules rules;
 
-/*************************************************************************/
+	lock();
+	rules=m_Rules;
+	unlock();
 
+	return rules;
+}
 
-#endif
+void Room::addPlayer(Player *player) {
+	lock();
+	m_Players.push_back(player);
+	unlock();
+}
+
+void Room::removePlayer(const Player *player) {
+	lock();
+
+	std::vector<Player*> nlist;
+
+	for (int i=0; i<m_Players.size(); i++) {
+		if (m_Players[i]!=player)
+			nlist.push_back(m_Players[i]);
+	}
+
+	m_Players=nlist;
+	unlock();
+}
+
+std::vector<Player*> Room::getPlayers() {
+	std::vector<Player*> list;
+
+	lock();
+	list=m_Players;
+	unlock();
+
+	return list;
+}

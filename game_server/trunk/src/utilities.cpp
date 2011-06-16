@@ -17,23 +17,12 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the game server protocol.
+// utilities.cpp: implementation of Util namespace functions.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#include <cstdlib>
 
-/// Types of incoming connections.
-#define CONN_CLIENT		0x00
-#define CONN_LOBBY		0x01
+#include "utilities.h"
 
-/// Inter-server communication.
-#define IS_OPENROOM		0x00
-
-/// Room parameters.
-#define PROP_RANDOM			0x00	// property distributed randomly to players
-#define PROP_RETURNBANK		0x01	// property returned to bank
-
-/*************************************************************************/
-
-
-#endif
+int Util::randomInt(int low, int high) {
+	return (low+int((high-low+1)*rand()/RAND_MAX+1.0));
+}
