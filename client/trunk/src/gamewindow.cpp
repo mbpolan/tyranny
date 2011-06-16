@@ -24,11 +24,34 @@
 
 #include "ui/ui_gamewindow.h"
 
-GameWindow::GameWindow(const QString &username, QWidget *parent): QMainWindow(parent) {
+GameWindow::GameWindow(int gid, const QString &username, const QString &host, int port, QWidget *parent): QMainWindow(parent) {
 	ui=new Ui::GameWindow;
 	ui->setupUi(this);
 
 	// replace the separator placeholder widget with the board view
 	BoardView *view=new BoardView(this);
 	ui->glLayout->addWidget(view);
+
+	// create the network handler
+	m_Network=new GameProtocol(gid, username, this);
+
+	// connect signals
+	connect(m_Network, SIGNAL(connected()), this, SLOT(onNetConnected()));
+	connect(m_Network, SIGNAL(disconnected()), this, SLOT(onNetDisconnected()));
+	connect(m_Network, SIGNAL(networkError(QString)), this, SLOT(onNetError(QString)));
+
+	// attempt a connection to the game server
+	m_Network->connectToServer(host, port);
+}
+
+void GameWindow::onNetConnected() {
+	statusBar()->showMessage(tr("Connected to server. Authorizing..."));
+}
+
+void GameWindow::onNetDisconnected() {
+	statusBar()->showMessage(tr("Disconnected from game server. Closing interface..."));
+}
+
+void GameWindow::onNetError(const QString &message) {
+	statusBar()->showMessage(QString("*** ")+message);
 }

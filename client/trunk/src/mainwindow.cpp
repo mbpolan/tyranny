@@ -26,6 +26,7 @@
 #include <sstream>
 
 #include "authdialog.h"
+#include "gamewindow.h"
 #include "iohandler.h"
 #include "mainwindow.h"
 #include "prefdialog.h"
@@ -114,7 +115,7 @@ void MainWindow::onConnect() {
 	connect(m_Network, SIGNAL(userBlockedList(QStringList)), this, SLOT(onNetBlockedList(QStringList)));
 	connect(m_Network, SIGNAL(serverInfo(QString)), this, SLOT(onNetInfoMessage(QString)));
 	connect(m_Network, SIGNAL(serverError(QString)), this, SLOT(onNetErrorMessage(QString)));
-	connect(m_Network, SIGNAL(joinGameServer(QString,int)), this, SLOT(onNetJoinGameServer(QString,int)));
+	connect(m_Network, SIGNAL(joinGameServer(int,QString,int)), this, SLOT(onNetJoinGameServer(int,QString,int)));
 	connect(m_Network, SIGNAL(roomListUpdate(RoomData)), this, SLOT(onNetRoomListUpdate(RoomData)));
 	connect(m_Network, SIGNAL(roomListDelete(int)), this, SLOT(onNetRoomListDelete(int)));
 	connect(m_Network, SIGNAL(roomListRefresh(QVector<RoomData>)), this, SLOT(onNetRoomListRefresh(QVector<RoomData>)));
@@ -442,9 +443,12 @@ void MainWindow::onNetErrorMessage(const QString &msg) {
 	QMessageBox::critical(this, tr("Error"), msg, QMessageBox::Ok, QMessageBox::NoButton);
 }
 
-void MainWindow::onNetJoinGameServer(const QString &host, int port) {
-	// create a new tcp socket and attempt to connect to the game server
-	//QTcpSocket *socket=new QTcpSocket();
+void MainWindow::onNetJoinGameServer(int gid, const QString &host, int port) {
+	qDebug() << "join server at " << host << ":" << port;
+
+	// open a game window
+	m_GameWnd=new GameWindow(gid, m_LoggedInUser, host, port, this);
+	m_GameWnd->show();
 }
 
 void MainWindow::onNetRoomListUpdate(const RoomData &room) {
