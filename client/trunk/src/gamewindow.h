@@ -24,6 +24,8 @@
 
 #include <QMainWindow>
 
+#include "gameprotocol.h"
+
 namespace Ui {
 	class GameWindow;
 }
@@ -33,15 +35,31 @@ class GameWindow: public QMainWindow {
 
 	public:
 		/**
-		 * Creates a blank window for the given username.
+		 * Creates a blank room window for the given username.
 		 *
+		 * @param gid The room's id number.
 		 * @param username The user who is logged in.
+		 * @param host The host game server to connect to.
+		 * @param port The host game server's port.
 		 * @param parent The parent for this window.
 		 */
-		GameWindow(const QString &username, QWidget *parent=NULL);
+		GameWindow(int gid, const QString &username, const QString &host, int port, QWidget *parent=NULL);
+
+	private slots:
+		/// Network handler for successful connections.
+		void onNetConnected();
+
+		/// Network handler for disconnect.
+		void onNetDisconnected();
+
+		/// Network handler for critical network errors.
+		void onNetError(const QString &message);
 
 	private:
 		Ui::GameWindow *ui;
+
+		/// Network protocol handler.
+		GameProtocol *m_Network;
 };
 
 #endif

@@ -209,7 +209,7 @@ class NetManager: public QObject {
 		void serverError(const QString &message);
 
 		/// Signal emitted when the user should connect to a game server.
-		void joinGameServer(const QString &host, int port);
+		void joinGameServer(int gid, const QString &host, int port);
 
 		/// Signal emitted when updated data about a room is available.
 		void roomListUpdate(const RoomData &data);

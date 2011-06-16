@@ -24,6 +24,7 @@
 
 #include <QtGui/QMainWindow>
 
+#include "gamewindow.h"
 #include "prefdialog.h"
 #include "netmanager.h"
 
@@ -140,7 +141,7 @@ class MainWindow: public QMainWindow {
 		void onNetErrorMessage(const QString &msg);
 
 		/// Network handler for joining a game server.
-		void onNetJoinGameServer(const QString &host, int port);
+		void onNetJoinGameServer(int gid, const QString &host, int port);
 
 		/// Network handler for updating a room.
 		void onNetRoomListUpdate(const RoomData &room);
@@ -176,6 +177,9 @@ class MainWindow: public QMainWindow {
 
 		/// Network manager object.
 		NetManager *m_Network;
+
+		/// The current room's game window.
+		GameWindow *m_GameWnd;
 
 		/// The username of the currently logged in user.
 		QString m_LoggedInUser;

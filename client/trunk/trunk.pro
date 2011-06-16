@@ -26,7 +26,8 @@ HEADERS += src/mainwindow.h \
     src/rulesdialog.h \
     src/roomdata.h \
     src/gamewindow.h \
-    src/boardview.h
+    src/boardview.h \
+    src/gameprotocol.h
 FORMS += src/ui/mainwindow.ui \
     src/ui/prefdialog.ui \
     src/ui/authdialog.ui \
@@ -48,4 +49,5 @@ SOURCES += src/client.cpp src/mainwindow.cpp \
     src/userlistdialog.cpp \
     src/rulesdialog.cpp \
     src/gamewindow.cpp \
-    src/boardview.cpp
+    src/boardview.cpp \
+    src/gameprotocol.cpp

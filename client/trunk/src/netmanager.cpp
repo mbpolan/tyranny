@@ -280,10 +280,11 @@ void NetManager::handleCreateRoomResponse(Packet &p) {
 		emit serverError(p.string());
 	else {
 		// get the connection details
+		int gid=p.uint32();
 		QString host=p.string();
 		int port=p.uint32();
 
-		emit joinGameServer(host, port);
+		emit joinGameServer(gid, host, port);
 	}
 }
 
@@ -291,10 +292,11 @@ void NetManager::handleJoinRoomResponse(Packet &p) {
 	// determine the result
 	char result=p.byte();
 	if (result==PKT_SUCCESS) {
+		int gid=p.uint32();
 		QString host=p.string();
 		int port=p.uint32();
 
-		emit joinGameServer(host, port);
+		emit joinGameServer(gid, host, port);
 	}
 
 	else
