@@ -19,6 +19,8 @@
  ***************************************************************************/
 // gamewindow.cpp: implementation of the GameWindow class.
 
+#include <QMessageBox>
+
 #include "boardview.h"
 #include "gamewindow.h"
 
@@ -39,6 +41,7 @@ GameWindow::GameWindow(int gid, const QString &username, const QString &host, in
 	connect(m_Network, SIGNAL(connected()), this, SLOT(onNetConnected()));
 	connect(m_Network, SIGNAL(disconnected()), this, SLOT(onNetDisconnected()));
 	connect(m_Network, SIGNAL(networkError(QString)), this, SLOT(onNetError(QString)));
+	connect(m_Network, SIGNAL(startWait()), this, SLOT(onNetStartWait()));
 
 	// attempt a connection to the game server
 	m_Network->connectToServer(host, port);
@@ -54,4 +57,12 @@ void GameWindow::onNetDisconnected() {
 
 void GameWindow::onNetError(const QString &message) {
 	statusBar()->showMessage(QString("*** ")+message);
+}
+
+void GameWindow::onNetStartWait() {
+	QMessageBox::question(this, tr("Waiting"), tr("The game is ready to begin. "
+								    "You can either wait for more players or start now."), QMessageBox::Ok);
+
+	// once the dialog is dismissed, send the game server a reply
+	m_Network->beginGame();
 }

@@ -39,6 +39,9 @@ class GameProtocol: public QObject {
 		 */
 		GameProtocol(int gid, const QString &username, QObject *parent=NULL);
 
+		/// Destructor.
+		virtual ~GameProtocol();
+
 		/**
 		 * Connects to the game server given by the connection information.
 		 *
@@ -51,6 +54,11 @@ class GameProtocol: public QObject {
 		 * Disconnects from the current game server.
 		 */
 		void disconnectFromServer();
+
+		/**
+		 * Tells the game server to begin the room's game.
+		 */
+		void beginGame();
 
 	public slots:
 		/// Handler for establishing a connection to server.
@@ -74,6 +82,9 @@ class GameProtocol: public QObject {
 
 		/// Signal emitted when a message from the server arrives.
 		void networkError(const QString &message);
+
+		/// Signal emitted when the room is waiting to begin.
+		void startWait();
 
 	private:
 		/// Handles parsing an incoming packet.

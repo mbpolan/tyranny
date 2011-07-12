@@ -85,4 +85,8 @@
 #define MSG_INFO			0xE1
 #define MSG_ERROR			0xE2
 
+/// Room controls.
+#define GMRM_START_WAIT		0xC0
+#define GMRM_BEGIN_GAME		0xC1
+
 #endif

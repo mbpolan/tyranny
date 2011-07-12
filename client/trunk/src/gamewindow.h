@@ -55,6 +55,9 @@ class GameWindow: public QMainWindow {
 		/// Network handler for critical network errors.
 		void onNetError(const QString &message);
 
+		/// Network handler for start/wait dialog.
+		void onNetStartWait();
+
 	private:
 		Ui::GameWindow *ui;
 
