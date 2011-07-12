@@ -50,6 +50,11 @@ class Human: public Player {
 		 */
 		int getSocket() const { return m_Socket; }
 
+		/**
+		 * Tells the client to wait for the owner to begin the game.
+		 */
+		void sendStartControl();
+
 	private:
 		/// The communications socket.
 		int m_Socket;

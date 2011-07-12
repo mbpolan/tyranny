@@ -20,7 +20,15 @@
 // human.cpp: implementation of the Human class.
 
 #include "human.h"
+#include "packet.h"
+#include "protspec.h"
 
 Human::Human(const std::string &username, int socket): Player(username) {
 	m_Socket=socket;
+}
+
+void Human::sendStartControl() {
+	Packet p;
+	p.addByte(GMRM_START_WAIT);
+	p.write(m_Socket);
 }
