@@ -19,6 +19,7 @@
  ***************************************************************************/
 // gameprotocol.cpp: implementation of the GameProtocol class.
 
+#include <QDebug>
 #include <QStatusBar>
 
 #include "gameprotocol.h"
@@ -28,6 +29,11 @@
 GameProtocol::GameProtocol(int gid, const QString &username, QObject *parent): QObject(parent) {
 	m_Gid=gid;
 	m_Username=username;
+}
+
+GameProtocol::~GameProtocol() {
+	if (m_Socket)
+		m_Socket->disconnectFromHost();
 }
 
 void GameProtocol::connectToServer(const QString &host, int port) {
@@ -44,6 +50,12 @@ void GameProtocol::connectToServer(const QString &host, int port) {
 
 void GameProtocol::disconnectFromServer() {
 	m_Socket->disconnectFromHost();
+}
+
+void GameProtocol::beginGame() {
+	Packet p;
+	p.addByte(GMRM_BEGIN_GAME);
+	p.write(m_Socket);
 }
 
 void GameProtocol::onConnected() {
@@ -71,9 +83,18 @@ void GameProtocol::onError(const QAbstractSocket::SocketError &error) {
 }
 
 void GameProtocol::onDataReady() {
-
+	while(m_Socket->bytesAvailable()) {
+		Packet p;
+		while(p.read(m_Socket))
+			parsePacket(p);
+	}
 }
 
 void GameProtocol::parsePacket(Packet &p) {
+	int header=p.byte();
+	switch(header) {
+		case GMRM_START_WAIT: emit startWait(); break;
 
+		default: qDebug() << "Unknown packet header: " << header;
+	}
 }
