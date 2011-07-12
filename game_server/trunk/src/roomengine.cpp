@@ -19,9 +19,12 @@
  ***************************************************************************/
 // roomengine.cpp: implementation of the RoomEngine class.
 
+#include <sys/socket.h>
 #include <sys/time.h>
 
 #include "human.h"
+#include "packet.h"
+#include "protspec.h"
 #include "roomengine.h"
 
 RoomEngine *g_RoomEngine=NULL;
@@ -47,9 +50,9 @@ void* RoomEngine::roomProcess(void *arg) {
 	ts.tv_sec=tv.tv_sec+(60*5);
 	ts.tv_nsec=tv.tv_usec*1000;
 
-	pthread_mutex_lock(&data->ownerJoinMutex);
-	pthread_cond_timedwait(&data->ownerJoinCond, &data->ownerJoinMutex, &ts);
-	pthread_mutex_unlock(&data->ownerJoinMutex);
+	pthread_mutex_lock(&data->joinMutex);
+	pthread_cond_timedwait(&data->ownerJoinCond, &data->joinMutex, &ts);
+	pthread_mutex_unlock(&data->joinMutex);
 
 	// see if anyone joined
 	std::vector<Player*> players=data->room->getPlayers();
@@ -62,6 +65,64 @@ void* RoomEngine::roomProcess(void *arg) {
 	}
 
 	std::cout << "Owner " << players[0]->getUsername() << " joined the room.\n";
+
+	// tell the owner's client to show the begin/wait dialog
+	Human *owner=static_cast<Human*>(players[0]);
+	owner->sendStartControl();
+
+	// set a time out of 5 seconds on the owner socket
+	int osock=owner->getSocket();
+	ts.tv_sec=5;
+	ts.tv_nsec=0;
+	if (setsockopt(osock, SOL_SOCKET, SO_RCVTIMEO, (char*) &ts, sizeof(ts))<0) {
+		std::cout << "Failed to set timeout on owner socket.\n";
+	}
+
+	// wait for the owner to reply
+	Packet r;
+	bool terminate=false;
+	while(1) {
+		Packet::Result result=r.read(osock);
+
+		// if the owner disconnected, destroy the room
+		if (result==Packet::Disconnected || result==Packet::DataCorrupt) {
+			std::cout << "Owner connection terminated\n";
+			terminate=true;
+			break;
+		}
+
+		// otherwise if the read timed out, check for new players
+		else if (result==Packet::TimedOut) {
+			pthread_mutex_lock(&data->joinMutex);
+
+			std::cout << "Checking for new players...\n";
+
+			pthread_mutex_unlock(&data->joinMutex);
+		}
+
+		// otherwise the owner sent a packet
+		else {
+			uint8_t header=r.byte();
+
+			// see if this is the reply we are waiting for
+			if (header==GMRM_BEGIN_GAME) {
+				std::cout << "Owner flagged game to begin\n";
+				break;
+			}
+		}
+	}
+
+	// see if we should begin the game
+	if (!terminate) {
+		// remove any timeouts we set on the owner socket
+		ts.tv_sec=0;
+		ts.tv_nsec=0;
+		if (setsockopt(osock, SOL_SOCKET, SO_RCVTIMEO, (char*) &ts, sizeof(ts))<0) {
+			std::cout << "Failed to clear timeout on owner socket.\n";
+		}
+
+		std::cout << "Beginning new round\n";
+	}
 
 	// temporary placeholder to keep the room alive for a bit
 	sleep(5);
@@ -121,18 +182,19 @@ bool RoomEngine::addPlayerToRoom(int gid, const std::string &username, int socke
 		return false;
 	}
 
+	pthread_mutex_lock(&m_Rooms[gid]->joinMutex);
+
 	// otherwise this player is free to join
 	Human *human=new Human(username, socket);
 	room->addPlayer(static_cast<Player*>(human));
 
 	// see if the owner joined for the first time, and if so, wake the room thread
 	if (room->getPlayers().size()==1 && room->getOwner()==username) {
-		std::cout << "Awaking on owner join condition... ";
-		pthread_mutex_lock(&m_Rooms[gid]->ownerJoinMutex);
+		std::cout << "Awaking on owner join condition. ";
 		pthread_cond_signal(&m_Rooms[gid]->ownerJoinCond);
-		pthread_mutex_unlock(&m_Rooms[gid]->ownerJoinMutex);
-		std::cout << "done!\n";
 	}
+
+	pthread_mutex_unlock(&m_Rooms[gid]->joinMutex);
 
 	unlock();
 
@@ -140,13 +202,13 @@ bool RoomEngine::addPlayerToRoom(int gid, const std::string &username, int socke
 }
 
 RoomEngine::ThreadData::ThreadData(Room *room) {
-	pthread_mutex_init(&ownerJoinMutex, NULL);
+	pthread_mutex_init(&joinMutex, NULL);
 	pthread_cond_init(&ownerJoinCond, NULL);
 
 	this->room=room;
 }
 
 RoomEngine::ThreadData::~ThreadData() {
-	pthread_mutex_destroy(&ownerJoinMutex);
+	pthread_mutex_destroy(&joinMutex);
 	pthread_cond_destroy(&ownerJoinCond);
 }
