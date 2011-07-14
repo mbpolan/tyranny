@@ -296,6 +296,12 @@ void MainWindow::onNetAuthenticate() {
 		QString username=ad.getUsername();
 		QString password=ad.getPassword();
 
+		// store the username
+		m_LoggedInUser=username;
+
+		// also update the window title
+		setWindowTitle("Tyranny Client - Logged in as "+username);
+
 		// send the credentials
 		m_Network->sendAuthentication(username, password);
 	}
@@ -330,12 +336,6 @@ void MainWindow::onNetUserLoggedIn(const QString &username, const NetManager::Us
 		b.setColor(Qt::darkRed);
 		item->setForeground(0, b);
 	}
-
-	// store the username
-	m_LoggedInUser=username;
-
-	// also update the window title
-	setWindowTitle("Tyranny Client - Logged in as "+username);
 }
 
 void MainWindow::onNetUserLoggedOut(const QString &username) {

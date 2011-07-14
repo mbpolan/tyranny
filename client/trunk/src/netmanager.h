@@ -221,6 +221,9 @@ class NetManager: public QObject {
 		void roomListRefresh(const QVector<RoomData> &list);
 
 	private slots:
+		/// Handler to prepare the client when a connection to a lobby server was established.
+		void onConnected();
+
 		/// Handler for socket error condition.
 		void onError(QAbstractSocket::SocketError error);
 

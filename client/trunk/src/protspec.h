@@ -29,6 +29,7 @@
 /// Types of incoming connections.
 #define CONN_CLIENT		0x00
 #define CONN_LOBBY		0x01
+#define CONN_GAME			0x02
 
 /// User statuses.
 #define USER_NONE			0x00
