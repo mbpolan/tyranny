@@ -20,6 +20,7 @@
 // utilities.cpp: implementation of Util namespace functions.
 
 #include <cstdlib>
+#include <sys/socket.h>
 
 #include "utilities.h"
 

@@ -51,6 +51,20 @@ class Human: public Player {
 		int getSocket() const { return m_Socket; }
 
 		/**
+		 * Flags this player as accepted in a room.
+		 *
+		 * @param b true if yes, false if no.
+		 */
+		void setAccepted(bool b) { m_Accepted=b; }
+
+		/**
+		 * Checks whether or not the player has been accepted by the room owner.
+		 *
+		 * @return true if yes, false otherwise.
+		 */
+		bool isAccepted() const { return m_Accepted; }
+
+		/**
 		 * Tells the client to wait for the owner to begin the game.
 		 */
 		void sendStartControl();
@@ -58,6 +72,9 @@ class Human: public Player {
 	private:
 		/// The communications socket.
 		int m_Socket;
+
+		/// Flags whether the player has been accepted to join by room owner.
+		bool m_Accepted;
 };
 
 #endif

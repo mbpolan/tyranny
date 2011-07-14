@@ -35,6 +35,10 @@
 ConfigFile *g_ConfigFile=NULL;
 RoomEngine *g_Engine=NULL;
 
+void* connectionHandler(void*);
+void handleClientConnection(Packet &p, ServerSocket::Client*);
+void handleLobbyServerConnection(Packet &p, ServerSocket::Client*);
+
 void* connectionHandler(void *arg) {
 	ServerSocket::Client *data=(ServerSocket::Client*) arg;
 	int socket=data->getSocket();
@@ -52,22 +56,15 @@ void* connectionHandler(void *arg) {
 	// a client is attempting to connect
 	if (header==CONN_CLIENT) {
 		std::cout << "Accepted client connection on " << data->getIP() << ":" << data->getPort() << std::endl;
-		handleClientConnection(p, socket);
+		handleClientConnection(p, data);
 	}
 
 	// the parent lobby server is attempting to connect
-	else if (header==CONN_LOBBY) {
-		std::cout << "Accepted lobby server connection on " << data->getIP() << ":" << data->getPort() << std::endl;
-
-		handleLobbyServerConnection(p, socket);
-
-		std::cout << "Disconnected lobby server connection on socket " << socket << std::endl;
-
-		close(socket);
-	}
+	else if (header==CONN_LOBBY)
+		handleLobbyServerConnection(p, data);
 
 	else {
-		std::cout << "Rejecting connecton from " << data->getIP() << ":" << data->getPort() << " (unknown source)\n";
+		std::cout << "Rejecting connection from " << data->getIP() << " (unknown source)\n";
 		close(socket);
 	}
 
@@ -75,7 +72,19 @@ void* connectionHandler(void *arg) {
 	pthread_exit(0);
 }
 
-void handleLobbyServerConnection(Packet &p, int socket) {
+void handleLobbyServerConnection(Packet &p, ServerSocket::Client *data) {
+	int socket=data->getSocket();
+
+	// verify that this is an authentic connection
+	if (data->getIP()!=g_ConfigFile->getLobbyServerIP()) {
+		std::cout << "Warning: rejecting unauthorized lobby server connection from: " << data->getIP() << std::endl;
+		close(socket);
+
+		return;
+	}
+
+	std::cout << "Accepted lobby server connection on " << data->getIP() << ":" << data->getPort() << std::endl;
+
 	// determine the lobby server's request
 	uint8_t request=p.byte();
 
@@ -107,9 +116,14 @@ void handleLobbyServerConnection(Packet &p, int socket) {
 
 		std::cout << "Opened a room with gid " << gid << std::endl;
 	}
+
+	std::cout << "Disconnected lobby server connection on socket " << socket << std::endl;
+	close(socket);
 }
 
-void handleClientConnection(Packet &p, int socket) {
+void handleClientConnection(Packet &p, ServerSocket::Client *data) {
+	int socket=data->getSocket();
+
 	// get the client's username and target room id
 	std::string username=p.string();
 	int gid=p.uint32();

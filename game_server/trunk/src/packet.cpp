@@ -21,6 +21,7 @@
 
 #include <cerrno>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include "packet.h"
 
@@ -139,4 +140,20 @@ Packet::Result Packet::read(int fd) {
 	m_Pos=2;
 	
 	return NoError;
+}
+
+Packet::Result Packet::timedRead(int fd, long int sec, long int usec) {
+	// set the timeout
+	struct timeval tv;
+	tv.tv_sec=sec;
+	tv.tv_usec=usec;
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char*) &tv, sizeof(tv));
+
+	Result result=read(fd);
+
+	// clear the time out
+	tv.tv_sec=tv.tv_usec=0;
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char*) &tv, sizeof(tv));
+
+	return result;
 }

@@ -1,5 +1,6 @@
 bin_PROGRAMS = tyranny_game_server
 tyranny_game_server_SOURCES = \
+	clientsocket.cpp clientsocket.h \
 	configfile.cpp configfile.h \
 	gameserver.cpp gameserver.h \
 	human.cpp human.h \

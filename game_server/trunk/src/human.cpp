@@ -25,6 +25,7 @@
 
 Human::Human(const std::string &username, int socket): Player(username) {
 	m_Socket=socket;
+	m_Accepted=false;
 }
 
 void Human::sendStartControl() {

@@ -34,6 +34,8 @@ ConfigFile::ConfigFile(const std::string &path) {
 	m_ID="Tyranny Game Server 1";
 	m_IP="";
 	m_Port=0;
+	m_LobbyServerIP="";
+	m_LobbyServerPort=0;
 	m_ContentPkg="";
 
 	g_CfgFile=this;
@@ -78,7 +80,45 @@ void ConfigFile::parse() throw(ConfigFile::Exception) {
 		else if (xmlStrcmp(child->name, (const xmlChar*) "content-pkg")==0)
 			m_ContentPkg=std::string((const char*) xmlNodeGetContent(child));
 
+		// lobby server data
+		else if (xmlStrcmp(child->name, (const xmlChar*) "lobby-server")==0) {
+			try {
+				parseLobbyServerData(child);
+			}
+			catch (const ConfigFile::Exception &ex) {
+				throw ex;
+			}
+		}
+
 		child=child->next;
 	}
 }
 
+void ConfigFile::parseLobbyServerData(void *node) throw(ConfigFile::Exception) {
+	xmlNodePtr n=(xmlNodePtr) node;
+	xmlNodePtr ptr=n->children;
+
+	const char *ip=NULL;
+	int port=0;
+
+	while(ptr) {
+		if (xmlStrcmp(ptr->name, (const xmlChar*) "ip")==0)
+			ip=(const char*) xmlNodeGetContent(ptr);
+
+		else if (xmlStrcmp(ptr->name, (const xmlChar*) "port")==0) {
+			const char *pval=(const char*) xmlNodeGetContent(ptr);
+			port=atoi(pval);
+		}
+
+		ptr=ptr->next;
+	}
+
+	// verify we got all the data
+	if (!ip)
+		throw ConfigFile::Exception("Missing lobby server IP.");
+	if (port==0)
+		throw ConfigFile::Exception("Missing lobby server port.");
+
+	m_LobbyServerIP=std::string(ip);
+	m_LobbyServerPort=port;
+}

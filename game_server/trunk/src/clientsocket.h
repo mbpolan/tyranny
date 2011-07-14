@@ -17,67 +17,65 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// room.cpp: implementation of the Room class.
+// clientsocket.h: definition of the ClientSocket class.
 
-#include "room.h"
+#ifndef CLIENTSOCKET_H
+#define CLIENTSOCKET_H
 
-Room::Room(int gid, const std::string &owner) {
-	m_Gid=gid;
-	m_Owner=owner;
-	m_Rules=Rules(0, 0, 0, false, Rules::RandomToPlayers);
-	m_Players=std::vector<Player*>(4);
+#include <iostream>
 
-	for (int i=0; i<4; i++)
-		m_Players[i]=NULL;
-}
+class ClientSocket {
+	public:
+		/**
+		 * A general exception for sockets.
+		 */
+		class Exception {
+			public:
+				/// Default constructor for socket exceptions.
+				Exception(const std::string &msg): m_Message(msg) { };
 
-void Room::setRules(const Room::Rules &rules) {
-	lock();
-	m_Rules=rules;
-	unlock();
-}
+				/**
+				 * Returns the reason for this exception.
+				 * @return Message string
+				 */
+				std::string getMessage() const { return m_Message; }
+		private:
+			/// The message for this exception.
+			std::string m_Message;
+	};
 
-Room::Rules Room::getRules() {
-	Room::Rules rules;
+	public:
+		/**
+		 * Creates a new client socket.
+		 */
+		ClientSocket();
 
-	lock();
-	rules=m_Rules;
-	unlock();
+		/**
+		 * Attempts to establish a connection to the given host.
+		 *
+		 * @param host The host to connect to.
+		 * @param port The port number of the host.
+		 * @throw Exception If an error occurred during connection.
+		 */
+		void connect(const std::string &host, int port) throw(ClientSocket::Exception);
 
-	return rules;
-}
+		/**
+		 * Disconnects from the current host.
+		 *
+		 * @throw Exception If an error occurs during disconnect.
+		 */
+		void disconnect() throw(ClientSocket::Exception);
 
-void Room::addPlayer(Player *player) {
-	lock();
+		/**
+		 * Returns the socket's file descriptor.
+		 *
+		 * @return The socket fd.
+		 */
+		int getFD() const { return m_Socket; }
 
-	// find an empty slot
-	for (int i=0; i<4; i++) {
-		if (!m_Players[i]) {
-			m_Players[i]=player;
-			break;
-		}
-	}
+	private:
+		/// The socket we are working on.
+		int m_Socket;
+};
 
-	unlock();
-}
-
-void Room::removePlayer(const Player *player) {
-	lock();
-
-	for (int i=0; i<4; i++) {
-		if (m_Players[i]==player)
-			m_Players[i]=NULL;
-	}
-
-	unlock();
-}
-
-std::vector<Player*> Room::getPlayers() {
-	std::vector<Player*> list;
-
-	lock();
-	list=m_Players;
-	unlock();
-
-	return list;
-}
+#endif

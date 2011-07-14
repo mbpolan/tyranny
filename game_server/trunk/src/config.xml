@@ -2,4 +2,8 @@
 	<id>Game Server 1</id>
 	<ip>127.0.0.1</ip>
 	<port>9191</port>
+	<lobby-server>
+		<ip>127.0.0.1</ip>
+		<port>9000</port>
+	</lobby-server>
 </game-server-config>

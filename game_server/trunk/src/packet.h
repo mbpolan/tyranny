@@ -153,6 +153,17 @@ class Packet {
 		 * @return A result code.
 		 */
 		Result read(int socket);
+
+		/**
+		 * Similar to read(), but times out after the given interval.
+		 *
+		 * @see Packet::read()
+		 * @param socket The socket to read from.
+		 * @param sec The time out in seconds.
+		 * @param usec The time out in microseconds;
+		 * @return A result code.
+		 */
+		Result timedRead(int socket, long int sec, long int usec);
 	
 	private:
 		/// The internal packet buffer of bytes
