@@ -22,6 +22,8 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 
+#include "configfile.h"
+#include "clientsocket.h"
 #include "human.h"
 #include "packet.h"
 #include "protspec.h"
@@ -97,6 +99,30 @@ void* RoomEngine::roomProcess(void *arg) {
 
 			std::cout << "Checking for new players...\n";
 
+			// go over the list of players and check who is not accepted
+			for (int i=1; i<4; i++) {
+				Human *hp=static_cast<Human*>(data->room->getPlayers()[i]);
+				if (!hp)
+					continue;
+
+				// first see if this player is still connected
+				Packet test;
+				Packet::Result alive=test.timedRead(hp->getSocket(), 1, 0);
+				if (alive==Packet::Disconnected) {
+					// remove him from the players
+					std::cout << hp->getUsername() << " disconnected.\n";
+					data->room->removePlayer(hp);
+
+					delete hp;
+				}
+
+				// accept this player if the owner agrees
+				else if (!hp->isAccepted()) {
+					std::cout << hp->getUsername() << " joined the room!\n";
+					hp->setAccepted(true);
+				}
+			}
+
 			pthread_mutex_unlock(&data->joinMutex);
 		}
 
@@ -126,6 +152,24 @@ void* RoomEngine::roomProcess(void *arg) {
 
 	// temporary placeholder to keep the room alive for a bit
 	sleep(5);
+
+	// tell the lobby server that this room is closing
+	try {
+		ClientSocket cl;
+		cl.connect(ConfigFile::instance()->getLobbyServerIP(), ConfigFile::instance()->getLobbyServerPort());
+
+		Packet lp;
+		lp.addByte(CONN_GAME);
+		lp.addByte(IS_KILLROOM);
+		lp.addUint32(data->room->getGid());
+		lp.write(cl.getFD());
+
+		cl.disconnect();
+	}
+
+	catch (const ClientSocket::Exception &ex) {
+		std::cout << "ClientSocket Error: " << ex.getMessage() << std::endl;
+	}
 
 	std::cout << "Ending room #" << data->room->getGid() << std::endl;
 
@@ -184,12 +228,15 @@ bool RoomEngine::addPlayerToRoom(int gid, const std::string &username, int socke
 
 	pthread_mutex_lock(&m_Rooms[gid]->joinMutex);
 
+	std::cout << "Preparing new human player object...\n";
+
 	// otherwise this player is free to join
 	Human *human=new Human(username, socket);
+	human->setAccepted(false);
 	room->addPlayer(static_cast<Player*>(human));
 
 	// see if the owner joined for the first time, and if so, wake the room thread
-	if (room->getPlayers().size()==1 && room->getOwner()==username) {
+	if (room->getOwner()==username) {
 		std::cout << "Awaking on owner join condition. ";
 		pthread_cond_signal(&m_Rooms[gid]->ownerJoinCond);
 	}

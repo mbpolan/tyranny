@@ -25,9 +25,11 @@
 /// Types of incoming connections.
 #define CONN_CLIENT		0x00
 #define CONN_LOBBY		0x01
+#define CONN_GAME		0x02
 
 /// Inter-server communication.
 #define IS_OPENROOM		0x00
+#define IS_KILLROOM		0x01
 
 /// Room parameters.
 #define PROP_RANDOM			0x00	// property distributed randomly to players

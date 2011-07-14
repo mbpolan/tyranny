@@ -17,67 +17,41 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// room.cpp: implementation of the Room class.
+// clientsocket.cpp: implementation of the ClientSocket class.
 
-#include "room.h"
+#include <arpa/inet.h>
+#include <cstring>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sstream>
 
-Room::Room(int gid, const std::string &owner) {
-	m_Gid=gid;
-	m_Owner=owner;
-	m_Rules=Rules(0, 0, 0, false, Rules::RandomToPlayers);
-	m_Players=std::vector<Player*>(4);
+#include "clientsocket.h"
 
-	for (int i=0; i<4; i++)
-		m_Players[i]=NULL;
+ClientSocket::ClientSocket() {
+	m_Socket=-1;
 }
 
-void Room::setRules(const Room::Rules &rules) {
-	lock();
-	m_Rules=rules;
-	unlock();
+void ClientSocket::connect(const std::string &host, int port) throw(ClientSocket::Exception) {
+	// create the socket itself
+	m_Socket=socket(AF_INET, SOCK_STREAM, 0);
+	if (m_Socket<0)
+		throw ClientSocket::Exception("Unable to create client socket.");
+
+	struct sockaddr_in addr;
+	addr.sin_family=AF_INET;
+	addr.sin_addr.s_addr=inet_addr(host.c_str());
+	addr.sin_port=htons(port);
+	memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
+
+	if (::connect(m_Socket, (struct sockaddr*) &addr, sizeof(struct sockaddr_in))<0)
+		throw ClientSocket::Exception("Unable to connect to host.");
 }
 
-Room::Rules Room::getRules() {
-	Room::Rules rules;
+void ClientSocket::disconnect() throw (ClientSocket::Exception) {
+	if (m_Socket==-1)
+		throw ClientSocket::Exception("There is no active socket to disconnect.");
 
-	lock();
-	rules=m_Rules;
-	unlock();
-
-	return rules;
-}
-
-void Room::addPlayer(Player *player) {
-	lock();
-
-	// find an empty slot
-	for (int i=0; i<4; i++) {
-		if (!m_Players[i]) {
-			m_Players[i]=player;
-			break;
-		}
-	}
-
-	unlock();
-}
-
-void Room::removePlayer(const Player *player) {
-	lock();
-
-	for (int i=0; i<4; i++) {
-		if (m_Players[i]==player)
-			m_Players[i]=NULL;
-	}
-
-	unlock();
-}
-
-std::vector<Player*> Room::getPlayers() {
-	std::vector<Player*> list;
-
-	lock();
-	list=m_Players;
-	unlock();
-
-	return list;
+	close(m_Socket);
+	m_Socket=-1;
 }

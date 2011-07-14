@@ -92,12 +92,31 @@ class ConfigFile {
 		int getPort() const { return m_Port; }
 		
 		/**
+		 * Returns the IP address of the lobby server.
+		 * @return The IP address/hostname of the lobby server.
+		 */
+		std::string getLobbyServerIP() const { return m_LobbyServerIP; }
+
+		/**
+		 * Returns the port number of the lobby server.
+		 * @return Port number of the lobby server.
+		 */
+		int getLobbyServerPort() const { return m_LobbyServerPort; }
+
+		/**
 		 * Returns the path to the content package.
 		 * @return Path to the content package.
 		 */
 		 std::string getContentPackagePath() const { return m_ContentPkg; }
 
 	private:
+		/**
+		 * Parses the lobby-server XML section.
+		 *
+		 * @param node The root node of that section.
+		 */
+		 void parseLobbyServerData(void *node) throw(ConfigFile::Exception);
+
 		/// The path of the configuration file to load.
 		std::string m_Path;
 
@@ -110,6 +129,12 @@ class ConfigFile {
 		/// Port number to bind to.
 		int m_Port;
 		
+		/// The lobby server IP address.
+		std::string m_LobbyServerIP;
+
+		/// The lobby server port.
+		int m_LobbyServerPort;
+
 		/// Path to the content package.
 		std::string m_ContentPkg;
 };
