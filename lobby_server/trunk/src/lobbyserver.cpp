@@ -39,11 +39,41 @@ ConfigFile *g_ConfigFile;
 ServerPool *g_Pool;
 UserManager *g_UserManager;
 
+void* connectionHandler(void*);
+void handleClientConnection(ServerSocket::Client*);
+void handleGameServerConnection(Packet &p, ServerSocket::Client*);
+
 void* connectionHandler(void *arg) {
 	ServerSocket::Client *data=(ServerSocket::Client*) arg;
 	int socket=data->getSocket();
 	
-	std::cout << "Accepted connection from " << data->getIP() << ":" << data->getPort() << std::endl;
+	// read an initial packet
+	Packet p;
+	if (p.read(socket)!=Packet::NoError) {
+		close(socket);
+		pthread_exit(0);
+	}
+
+	uint8_t header=p.byte();
+
+	// connection from a client
+	if (header==CONN_CLIENT)
+		handleClientConnection(data);
+
+	// connection from a game server
+	else if (header==CONN_GAME)
+		handleGameServerConnection(p, data);
+
+	else
+		std::cout << "Unknown connection from source: " << data->getIP() << std::endl;
+
+	pthread_exit(0);
+}
+
+void handleClientConnection(ServerSocket::Client *data) {
+	int socket=data->getSocket();
+
+	std::cout << "Accepted client connection from " << data->getIP() << std::endl;
 	
 	// send the client an authentication request
 	Packet p, rp;
@@ -120,9 +150,36 @@ void* connectionHandler(void *arg) {
 	close(socket);
 	
 	std::cout << "Disconnected client on socket " << socket << std::endl;
-	
-	delete data;
-	pthread_exit(0);
+}
+
+void handleGameServerConnection(Packet &p, ServerSocket::Client *data) {
+	int socket=data->getSocket();
+
+	// verify this connection is in fact authentic
+	std::vector<ConfigFile::Server> servers=g_ConfigFile->getGameServerList();
+	bool authentic=false;
+	for (int i=0; i<servers.size(); i++) {
+		if (servers[i].getIP()==data->getIP())
+			authentic=true;
+	}
+
+	if (!authentic) {
+		std::cout << "Warning: rejecting unauthorized game server connection from: " << data->getIP() << std::endl;
+		close(socket);
+
+		return;
+	}
+
+	std::cout << "Accepted game server connection from " << data->getIP() << std::endl;
+
+	// see what the game server wants
+	uint8_t action=p.byte();
+
+	// a game room has closed
+	if (action==IS_KILLROOM)
+		g_UserManager->unregisterGameRoom(p.uint32());
+
+	close(socket);
 }
 
 int main(int argc, char *argv[]) {
