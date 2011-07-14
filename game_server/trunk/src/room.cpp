@@ -81,3 +81,18 @@ std::vector<Player*> Room::getPlayers() {
 
 	return list;
 }
+
+int Room::getNumPlayers() {
+	lock();
+
+	int count=0;
+
+	for (int i=0; i<4; i++) {
+		if (m_Players[i])
+			count++;
+	}
+
+	unlock();
+
+	return count;
+}

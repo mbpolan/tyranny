@@ -213,14 +213,14 @@ bool RoomEngine::addPlayerToRoom(int gid, const std::string &username, int socke
 	Room *room=m_Rooms[gid]->room;
 
 	// if the room is empty, the owner must join first
-	if (room->getPlayers().empty() && room->getOwner()!=username) {
+	if (room->getNumPlayers()==0 && room->getOwner()!=username) {
 		unlock();
 		error="Owner must join this room first.";
 		return false;
 	}
 
 	// make sure the room is not full already
-	if (room->getPlayers().size()==room->getRules().getMaxHumans()) {
+	if (room->getNumPlayers()==room->getRules().getMaxHumans()) {
 		unlock();
 		error="This room is already full.";
 		return false;

@@ -153,10 +153,21 @@ class Room: public Lockable {
 
 		/**
 		 * Returns a list of players in this room.
+		 * Do not try to check the amount of players in the room by calling the vector's
+		 * size() method. The vector is preallocated to have space for four (4) pointers,
+		 * so this will always lead to unexpected results in code. Use the getNumPlayers()
+		 * method instead.
 		 *
 		 * @return A vector of usernames.
 		 */
 		std::vector<Player*> getPlayers();
+
+		/**
+		 * Returns the amount of human players (accepted and not accepted) in this room.
+		 *
+		 * @return The number of human players.
+		 */
+		int getNumPlayers();
 
 	private:
 		/// The id number of the room.
