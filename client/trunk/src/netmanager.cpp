@@ -28,7 +28,7 @@ NetManager::NetManager(QObject *parent): QObject(parent) {
 	m_Socket=new QTcpSocket(this);
 
 	// connect socket signals
-	connect(m_Socket, SIGNAL(connected()), this, SIGNAL(connected()));
+	connect(m_Socket, SIGNAL(connected()), this, SLOT(onConnected()));
 	connect(m_Socket, SIGNAL(disconnected()), this, SIGNAL(disconnected()));
 	connect(m_Socket, SIGNAL(readyRead()), this, SLOT(onReadData()));
 	connect(m_Socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onError(QAbstractSocket::SocketError)));
@@ -156,6 +156,16 @@ void NetManager::sendRoomListRefresh() {
 	Packet p;
 	p.addByte(LB_ROOMLIST_REFRESH);
 	p.write(m_Socket);
+}
+
+void NetManager::onConnected() {
+	// we need to identify ourselves as a game client connection
+	Packet p;
+	p.addByte(CONN_CLIENT);
+	p.write(m_Socket);
+
+	// and also emit the proper signal
+	emit connected();
 }
 
 void NetManager::onError(QAbstractSocket::SocketError error) {
