@@ -95,6 +95,9 @@ class GameProtocol: public QObject {
 		/// Signal emitted when a player quits the room.
 		void playerQuit(int index);
 
+		/// Signal emitted when token selection is to begin.
+		void tokenSelection();
+
 	private:
 		/// Handles parsing an incoming packet.
 		void parsePacket(Packet &p);

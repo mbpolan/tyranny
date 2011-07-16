@@ -23,6 +23,7 @@
 
 #include "boardview.h"
 #include "gamewindow.h"
+#include "turndialog.h"
 
 #include "ui/ui_gamewindow.h"
 
@@ -45,6 +46,7 @@ GameWindow::GameWindow(int gid, const QString &username, const QString &host, in
 	connect(m_Network, SIGNAL(playerJoined(QString,int)), this, SLOT(onNetPlayerJoined(QString,int)));
 	connect(m_Network, SIGNAL(playerQuit(int)), this, SLOT(onNetPlayerQuit(int)));
 	connect(m_Network, SIGNAL(turnOrder(QVector<int>)), this, SLOT(onNetTurnOrder(QVector<int>)));
+	connect(m_Network, SIGNAL(tokenSelection()), this, SLOT(onNetTokenSelection()));
 
 	// create supplemental dialogs
 	m_BeginGameMsgBox=new QMessageBox(QMessageBox::Information, tr("Waiting..."),
@@ -58,6 +60,7 @@ GameWindow::GameWindow(int gid, const QString &username, const QString &host, in
 
 	// prepare other variables
 	m_Players=QVector<QString>(4);
+	m_TokChooser=NULL;
 }
 
 void GameWindow::onBeginGame() {
@@ -100,5 +103,13 @@ void GameWindow::onNetPlayerQuit(int index) {
 }
 
 void GameWindow::onNetTurnOrder(const QVector<int> &order) {
+	TurnDialog td(m_Players, order, this);
+	td.animate();
+	td.exec();
+}
 
+void GameWindow::onNetTokenSelection() {
+	// allocate the token chooser dialog and show it
+	m_TokChooser=new TokenChooser(m_Players, this);
+	m_TokChooser->show();
 }

@@ -98,6 +98,7 @@ void GameProtocol::parsePacket(Packet &p) {
 		case GAME_PLAYER_JOINED: handlePlayerJoined(p); break;
 		case GAME_PLAYER_QUIT: emit playerQuit(p.byte()); break;
 		case GAME_TURN_ORDER: handleTurnOrder(p); break;
+		case GAME_CHOOSE_TOK: emit tokenSelection(); break;
 
 		default: qDebug() << "Unknown packet header: " << header;
 	}

@@ -26,6 +26,7 @@
 #include <QMessageBox>
 
 #include "gameprotocol.h"
+#include "tokenchooser.h"
 
 namespace Ui {
 	class GameWindow;
@@ -71,6 +72,9 @@ class GameWindow: public QMainWindow {
 		/// Network handler for players quitting.
 		void onNetPlayerQuit(int index);
 
+		/// Network handler for showing the token selection dialog.
+		void onNetTokenSelection();
+
 	private:
 		Ui::GameWindow *ui;
 
@@ -79,6 +83,9 @@ class GameWindow: public QMainWindow {
 
 		/// Dialog to prompt room owners to begin the game.
 		QMessageBox *m_BeginGameMsgBox;
+
+		/// Token chooser dialog.
+		TokenChooser *m_TokChooser;
 
 		/// Network protocol handler.
 		GameProtocol *m_Network;
