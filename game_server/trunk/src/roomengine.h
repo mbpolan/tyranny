@@ -98,12 +98,6 @@ class RoomEngine: public Lockable {
 				 */
 				~ThreadData();
 
-				/// Mutex that locks the thread when a player is joining.
-				pthread_mutex_t joinMutex;
-
-				/// Condition variable for the ownerJoinMutex object.
-				pthread_cond_t ownerJoinCond;
-
 				/// Thread handle.
 				pthread_t thread;
 

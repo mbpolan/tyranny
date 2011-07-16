@@ -24,12 +24,10 @@
 #include "protspec.h"
 
 Human::Human(const std::string &username, int socket): Player(username) {
-	m_Socket=socket;
+	m_Protocol=new Protocol(socket);
 	m_Accepted=false;
 }
 
-void Human::sendStartControl() {
-	Packet p;
-	p.addByte(GMRM_START_WAIT);
-	p.write(m_Socket);
+Human::~Human() {
+	delete m_Protocol;
 }

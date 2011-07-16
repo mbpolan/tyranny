@@ -101,6 +101,10 @@ class Room: public Lockable {
 		};
 
 	public:
+		/// Various mutexes that keep this object thread-safe.
+		enum Lock { JoinMutex };
+
+	public:
 		/**
 		 * Creates an empty room with the given id number and owner.
 		 *
@@ -108,6 +112,38 @@ class Room: public Lockable {
 		 * @param The room owner.
 		 */
 		Room(int gid, const std::string &owner);
+
+		/**
+		 * Generates a random turn order for all players.
+		 */
+		void randomizeTurnOrder();
+
+		/**
+		 * Causes the current thread to sleep until someone joins the room.
+		 * After this method returns, the JoinMutex mutex will be locked -- be sure
+		 * to unlock it when you're done to avoid deadlocks!
+		 */
+		void waitOnJoin();
+
+		/**
+		 * Causes the current thread to awake when waiting for players to join.
+		 * Note that the aforementioned JoinMutex mutex will now be locked.
+		 */
+		void awakeOnJoin();
+
+		/**
+		 * Locks the defined room mutex.
+		 *
+		 * @param lock Which mutex to lock.
+		 */
+		void lock(const Room::Lock &lock);
+
+		/**
+		 * Unlocks the defined room mutex.
+		 *
+		 * @param lock Which mutex to unlock.
+		 */
+		void unlock(const Room::Lock &lock);
 
 		/**
 		 * Sets the rules for this room.
@@ -138,6 +174,13 @@ class Room: public Lockable {
 		std::string getOwner() const { return m_Owner; }
 
 		/**
+		 * Finds the index for the given username.
+		 *
+		 * @return The player's index, or -1 if no such player is in the room.
+		 */
+		int getPlayerIndex(const std::string &username);
+
+		/**
 		 * Adds a player to the game room.
 		 *
 		 * @param player The player to add.
@@ -148,8 +191,9 @@ class Room: public Lockable {
 		 * Removes a player from the game room.
 		 *
 		 * @param player The player to remove.
+		 * @return The index the player was previously assigned.
 		 */
-		void removePlayer(const Player *player);
+		int removePlayer(const Player *player);
 
 		/**
 		 * Returns a list of players in this room.
@@ -181,6 +225,15 @@ class Room: public Lockable {
 
 		/// List of players in the room.
 		std::vector<Player*> m_Players;
+
+		/// Indicies into the m_Players vector, based on turn order.
+		std::vector<int> m_TurnOrder;
+
+		/// Mutex that locks the thread when a player is joining.
+		pthread_mutex_t m_JoinMutex;
+
+		/// Condition variable for the ownerJoinMutex object.
+		pthread_cond_t m_OwnerJoinCond;
 };
 
 #endif

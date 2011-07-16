@@ -17,33 +17,34 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protspec.h: definition of the game server protocol.
+// game.cpp: implementation of the Game class.
 
-#ifndef PROTSPEC_H
-#define PROTSPEC_H
+#include <sys/epoll.h>
 
-/// Types of incoming connections.
-#define CONN_CLIENT		0x00
-#define CONN_LOBBY		0x01
-#define CONN_GAME		0x02
+#include "game.h"
+#include "human.h"
 
-/// Inter-server communication.
-#define IS_OPENROOM		0x00
-#define IS_KILLROOM		0x01
+Game::Game(Room *room) {
+	m_Room=room;
+}
 
-/// Room parameters.
-#define PROP_RANDOM			0x00	// property distributed randomly to players
-#define PROP_RETURNBANK		0x01	// property returned to bank
+void Game::begin() {
+	// determine turn order and send it to human players
+	m_Room->randomizeTurnOrder();
 
-/*************************************************************************/
+	// create a polling descriptor for up for 4 client connections
+	int pfd=epoll_create(4);
 
-/// Room controls.
-#define GMRM_START_WAIT		0xC0
-#define GMRM_BEGIN_GAME		0xC1
+	// add the human players we have thus far to the poll fd
+	m_Room->lock(Room::JoinMutex);
 
-/// Game related packets.
-#define GAME_TURN_ORDER		0xD0
-#define GAME_PLAYER_JOINED	0xD1
-#define GAME_PLAYER_QUIT	0xD2
+	static struct epoll_event e;
+	for (int i=0; i<4; i++) {
+		Human *hp=static_cast<Human*>(m_Room->getPlayers()[i]);
 
-#endif
+		if (hp) {
+			e.events=EPOLLIN;
+			e.data.fd=hp->getProtocol()->getSocket();
+		}
+	}
+}

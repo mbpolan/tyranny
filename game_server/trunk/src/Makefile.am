@@ -2,10 +2,12 @@ bin_PROGRAMS = tyranny_game_server
 tyranny_game_server_SOURCES = \
 	clientsocket.cpp clientsocket.h \
 	configfile.cpp configfile.h \
+	game.cpp game.h \
 	gameserver.cpp gameserver.h \
 	human.cpp human.h \
 	packet.cpp packet.h \
 	player.cpp player.h \
+	protocol.cpp protocol.h \
 	protspec.h \
 	room.cpp room.h \
 	roomengine.cpp roomengine.h \
