@@ -42,9 +42,27 @@ GameWindow::GameWindow(int gid, const QString &username, const QString &host, in
 	connect(m_Network, SIGNAL(disconnected()), this, SLOT(onNetDisconnected()));
 	connect(m_Network, SIGNAL(networkError(QString)), this, SLOT(onNetError(QString)));
 	connect(m_Network, SIGNAL(startWait()), this, SLOT(onNetStartWait()));
+	connect(m_Network, SIGNAL(playerJoined(QString,int)), this, SLOT(onNetPlayerJoined(QString,int)));
+	connect(m_Network, SIGNAL(playerQuit(int)), this, SLOT(onNetPlayerQuit(int)));
+	connect(m_Network, SIGNAL(turnOrder(QVector<int>)), this, SLOT(onNetTurnOrder(QVector<int>)));
+
+	// create supplemental dialogs
+	m_BeginGameMsgBox=new QMessageBox(QMessageBox::Information, tr("Waiting..."),
+						    tr("The game room is ready to begin. You may choose to wait for more players, or"
+							 "start the game beforehand. Click OK to start the game."), QMessageBox::Ok, this);
+	m_BeginGameMsgBox->hide();
+	connect(m_BeginGameMsgBox, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(onBeginGame()));
 
 	// attempt a connection to the game server
 	m_Network->connectToServer(host, port);
+
+	// prepare other variables
+	m_Players=QVector<QString>(4);
+}
+
+void GameWindow::onBeginGame() {
+	m_BeginGameMsgBox->hide();
+	m_Network->beginGame();
 }
 
 void GameWindow::onNetConnected() {
@@ -60,9 +78,27 @@ void GameWindow::onNetError(const QString &message) {
 }
 
 void GameWindow::onNetStartWait() {
-	QMessageBox::question(this, tr("Waiting"), tr("The game is ready to begin. "
-								    "You can either wait for more players or start now."), QMessageBox::Ok);
+	m_BeginGameMsgBox->show();
+}
 
-	// once the dialog is dismissed, send the game server a reply
-	m_Network->beginGame();
+void GameWindow::onNetPlayerJoined(const QString &username, int index) {
+	QTreeWidgetItem *item=new QTreeWidgetItem(ui->userList);
+	item->setText(0, username);
+
+	m_Players[index]=username;
+}
+
+void GameWindow::onNetPlayerQuit(int index) {
+	// remove the player in question
+	for (int i=0; i<ui->userList->topLevelItemCount(); i++) {
+		QTreeWidgetItem *item=ui->userList->topLevelItem(i);
+		if (item->text(0)==m_Players[index])
+			delete ui->userList->takeTopLevelItem(i);
+	}
+
+	m_Players[index]="";
+}
+
+void GameWindow::onNetTurnOrder(const QVector<int> &order) {
+
 }

@@ -90,4 +90,9 @@
 #define GMRM_START_WAIT		0xC0
 #define GMRM_BEGIN_GAME		0xC1
 
+/// Game related packets.
+#define GAME_TURN_ORDER		0xD0
+#define GAME_PLAYER_JOINED	0xD1
+#define GAME_PLAYER_QUIT	0xD2
+
 #endif

@@ -95,6 +95,27 @@ void GameProtocol::parsePacket(Packet &p) {
 	switch(header) {
 		case GMRM_START_WAIT: emit startWait(); break;
 
+		case GAME_PLAYER_JOINED: handlePlayerJoined(p); break;
+		case GAME_PLAYER_QUIT: emit playerQuit(p.byte()); break;
+		case GAME_TURN_ORDER: handleTurnOrder(p); break;
+
 		default: qDebug() << "Unknown packet header: " << header;
 	}
+}
+
+void GameProtocol::handlePlayerJoined(Packet &p) {
+	QString username=p.string();
+	int index=p.byte();
+
+	emit playerJoined(username, index);
+}
+
+void GameProtocol::handleTurnOrder(Packet &p) {
+	QVector<int> order(4);
+
+	// extract relevant data
+	for (int i=0; i<4; i++)
+		order[i]=p.byte();
+
+	emit turnOrder(order);
 }

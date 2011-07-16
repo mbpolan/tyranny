@@ -23,6 +23,7 @@
 #define GAMEWINDOW_H
 
 #include <QMainWindow>
+#include <QMessageBox>
 
 #include "gameprotocol.h"
 
@@ -46,6 +47,9 @@ class GameWindow: public QMainWindow {
 		GameWindow(int gid, const QString &username, const QString &host, int port, QWidget *parent=NULL);
 
 	private slots:
+		/// Handler for telling the game server to start the game.
+		void onBeginGame();
+
 		/// Network handler for successful connections.
 		void onNetConnected();
 
@@ -58,8 +62,23 @@ class GameWindow: public QMainWindow {
 		/// Network handler for start/wait dialog.
 		void onNetStartWait();
 
+		/// Network handler for turn order data.
+		void onNetTurnOrder(const QVector<int> &order);
+
+		/// Network handler for players joining.
+		void onNetPlayerJoined(const QString &username, int index);
+
+		/// Network handler for players quitting.
+		void onNetPlayerQuit(int index);
+
 	private:
 		Ui::GameWindow *ui;
+
+		/// List of players.
+		QVector<QString> m_Players;
+
+		/// Dialog to prompt room owners to begin the game.
+		QMessageBox *m_BeginGameMsgBox;
 
 		/// Network protocol handler.
 		GameProtocol *m_Network;
