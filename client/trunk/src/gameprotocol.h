@@ -86,9 +86,24 @@ class GameProtocol: public QObject {
 		/// Signal emitted when the room is waiting to begin.
 		void startWait();
 
+		/// Signal emitted when turn orders are available.
+		void turnOrder(const QVector<int> &order);
+
+		/// Signal emitted when a player joins the room.
+		void playerJoined(const QString &username, int index);
+
+		/// Signal emitted when a player quits the room.
+		void playerQuit(int index);
+
 	private:
 		/// Handles parsing an incoming packet.
 		void parsePacket(Packet &p);
+
+		/// Handles parsing a packet containing data about a player who joined the room.
+		void handlePlayerJoined(Packet &p);
+
+		/// Handles parsing a packet containing turn order data.
+		void handleTurnOrder(Packet &p);
 
 		/// The socket this protocol communicates with.
 		QTcpSocket *m_Socket;
