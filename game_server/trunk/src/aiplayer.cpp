@@ -17,53 +17,9 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// protocol.cpp: implementation of the Protocol class.
+// aiplayer.cpp: implementation of the AIPlayer class.
 
-#include "packet.h"
-#include "protocol.h"
-#include "protspec.h"
+#include "aiplayer.h"
 
-Protocol::Protocol(int socket) {
-	m_Socket=socket;
-}
-
-void Protocol::sendPlayerJoined(const std::string &username, int index) {
-	Packet p;
-	p.addByte(GAME_PLAYER_JOINED);
-	p.addString(username);
-	p.addByte(index);
-	p.write(m_Socket);
-}
-
-void Protocol::sendPlayerQuit(int index) {
-	Packet p;
-	p.addByte(GAME_PLAYER_QUIT);
-	p.addByte(index);
-	p.write(m_Socket);
-}
-
-void Protocol::sendStartControl() {
-	Packet p;
-	p.addByte(GMRM_START_WAIT);
-	p.write(m_Socket);
-}
-
-void Protocol::sendTurnOrder(const std::vector<int> &order) {
-	Packet p;
-	p.addByte(GAME_TURN_ORDER);
-
-	for (int i=0; i<4; i++)
-		p.addByte(order[i]);
-
-	p.write(m_Socket);
-}
-
-void Protocol::notify(const Protocol::Notification &note) {
-	Packet p;
-
-	// token choosing is to begin
-	if (note==Protocol::ChooseToken)
-		p.addByte(GAME_CHOOSE_TOK);
-
-	p.write(m_Socket);
+AIPlayer::AIPlayer(const std::string &username): Player(username) {
 }

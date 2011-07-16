@@ -26,6 +26,10 @@
 
 class Protocol {
 	public:
+		/// Various notifications sent to players.
+		enum Notification { ChooseToken };
+
+	public:
 		/**
 		 * Creates a new game protocol that communicates over the given socket.
 		 *
@@ -76,6 +80,11 @@ class Protocol {
 		 * @param order A vector of turn orders.
 		 */
 		void sendTurnOrder(const std::vector<int> &order);
+
+		/**
+		 * Sends the client a notification about an event.
+		 */
+		void notify(const Protocol::Notification &note);
 
 	private:
 		/// The communications socket.

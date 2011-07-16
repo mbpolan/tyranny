@@ -45,5 +45,7 @@
 #define GAME_TURN_ORDER		0xD0
 #define GAME_PLAYER_JOINED	0xD1
 #define GAME_PLAYER_QUIT	0xD2
+#define GAME_CHOOSE_TOK		0xD3
+#define GAME_SELECTED_TOK	0xD4
 
 #endif

@@ -34,6 +34,11 @@ class Player {
 		Player(const std::string &username);
 
 		/**
+		 * Returns the runtime type identifier for this object.
+		 */
+		virtual std::string rtti() const { return "Player"; }
+
+		/**
 		 * Returns the player's username.
 		 *
 		 * @return The player's username.

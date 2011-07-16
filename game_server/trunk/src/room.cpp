@@ -20,7 +20,9 @@
 // room.cpp: implementation of the Room class.
 
 #include <sys/time.h>
+#include <sstream>
 
+#include "aiplayer.h"
 #include "human.h"
 #include "room.h"
 #include "utilities.h"
@@ -42,20 +44,66 @@ Room::Room(int gid, const std::string &owner) {
 	pthread_cond_init(&m_OwnerJoinCond, NULL);
 }
 
+void Room::assignAI() {
+	Lockable::lock();
+
+	for (int i=0; i<4; i++) {
+		if (!m_Players[i]) {
+			// generate a name for this computer player
+			std::stringstream ss;
+			ss << "Computer " << i+1;
+			m_Players[i]=new AIPlayer(ss.str());
+
+			// inform other players
+			for (int j=0; j<4; j++) {
+				if (i==j)
+					continue;
+
+				Human *hp=dynamic_cast<Human*>(m_Players[j]);
+				if (hp)
+					hp->getProtocol()->sendPlayerJoined(ss.str(), i);
+			}
+		}
+	}
+
+	Lockable::unlock();
+}
+
 void Room::randomizeTurnOrder() {
 	Lockable::lock();
 
 	// TODO: make this actually random
-	m_TurnOrder[0]=0;
-	m_TurnOrder[1]=1;
+	m_TurnOrder[0]=1;
+	m_TurnOrder[1]=3;
 	m_TurnOrder[2]=2;
-	m_TurnOrder[3]=3;
+	m_TurnOrder[3]=0;
 
 	// inform all human players
 	for (int i=0; i<4; i++) {
-		Human *hp=static_cast<Human*>(m_Players[i]);
+		Human *hp=dynamic_cast<Human*>(m_Players[i]);
 		if (hp)
 			hp->getProtocol()->sendTurnOrder(m_TurnOrder);
+	}
+
+	Lockable::unlock();
+}
+
+void Room::tokenSelection() {
+	Lockable::lock();
+
+	// first alert all human players that its time to choose tokens
+	for (int i=0; i<4; i++) {
+		Human *hp=dynamic_cast<Human*>(m_Players[i]);
+		if (hp)
+			hp->getProtocol()->notify(Protocol::ChooseToken);
+	}
+
+	// now iterate over all players in order and have them choose a piece
+	for (int i=0; i<4; i++) {
+		Human *hp=dynamic_cast<Human*>(m_Players[m_TurnOrder[i]]);
+		if (hp) {
+
+		}
 	}
 
 	Lockable::unlock();
