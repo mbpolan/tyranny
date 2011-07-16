@@ -17,63 +17,30 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// human.h: definition of the Human class.
+// game.h: definition of the Game class.
 
-#ifndef HUMAN_H
-#define HUMAN_H
+#ifndef GAME_H
+#define GAME_H
 
 #include <iostream>
 
-#include "player.h"
-#include "protocol.h"
+#include "room.h"
 
-/**
- * A model for a human player.
- * Human players have distinct attributes that this class keeps track of, namely
- * the socket that the user is connected on, and the user's username. Moreover, special
- * methods for dealing with the client are included, including the ability to chat, wait
- * on moves, and more.
- */
-class Human: public Player {
+class Game {
 	public:
 		/**
-		 * Creates a human player model with the given username and socket.
+		 * Creates a new game handler for the given room.
 		 *
-		 * @param username The human player's username.
-		 * @param socket The socket the player connected with.
+		 * @param room Pointer to the room in question.
 		 */
-		Human(const std::string &username, int socket);
+		Game(Room *room);
 
-		/// Frees memory used by this object.
-		virtual ~Human();
-
-		/**
-		 * Returns the player's protocol handler.
-		 *
-		 * @return A pointer to a Protocol object.
-		 */
-		Protocol* getProtocol() { return m_Protocol; }
-
-		/**
-		 * Flags this player as accepted in a room.
-		 *
-		 * @param b true if yes, false if no.
-		 */
-		void setAccepted(bool b) { m_Accepted=b; }
-
-		/**
-		 * Checks whether or not the player has been accepted by the room owner.
-		 *
-		 * @return true if yes, false otherwise.
-		 */
-		bool isAccepted() const { return m_Accepted; }
+		/// Starts the game for the assigned room.
+		void begin();
 
 	private:
-		/// The communications protocol.
-		Protocol *m_Protocol;
-
-		/// Flags whether the player has been accepted to join by room owner.
-		bool m_Accepted;
+		/// The room for this game.
+		Room *m_Room;
 };
 
 #endif

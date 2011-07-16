@@ -17,63 +17,43 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-// human.h: definition of the Human class.
+// protocol.cpp: implementation of the Protocol class.
 
-#ifndef HUMAN_H
-#define HUMAN_H
-
-#include <iostream>
-
-#include "player.h"
+#include "packet.h"
 #include "protocol.h"
+#include "protspec.h"
 
-/**
- * A model for a human player.
- * Human players have distinct attributes that this class keeps track of, namely
- * the socket that the user is connected on, and the user's username. Moreover, special
- * methods for dealing with the client are included, including the ability to chat, wait
- * on moves, and more.
- */
-class Human: public Player {
-	public:
-		/**
-		 * Creates a human player model with the given username and socket.
-		 *
-		 * @param username The human player's username.
-		 * @param socket The socket the player connected with.
-		 */
-		Human(const std::string &username, int socket);
+Protocol::Protocol(int socket) {
+	m_Socket=socket;
+}
 
-		/// Frees memory used by this object.
-		virtual ~Human();
+void Protocol::sendPlayerJoined(const std::string &username, int index) {
+	Packet p;
+	p.addByte(GAME_PLAYER_JOINED);
+	p.addString(username);
+	p.addByte(index);
+	p.write(m_Socket);
+}
 
-		/**
-		 * Returns the player's protocol handler.
-		 *
-		 * @return A pointer to a Protocol object.
-		 */
-		Protocol* getProtocol() { return m_Protocol; }
+void Protocol::sendPlayerQuit(int index) {
+	Packet p;
+	p.addByte(GAME_PLAYER_QUIT);
+	p.addByte(index);
+	p.write(m_Socket);
+}
 
-		/**
-		 * Flags this player as accepted in a room.
-		 *
-		 * @param b true if yes, false if no.
-		 */
-		void setAccepted(bool b) { m_Accepted=b; }
+void Protocol::sendStartControl() {
+	Packet p;
+	p.addByte(GMRM_START_WAIT);
+	p.write(m_Socket);
+}
 
-		/**
-		 * Checks whether or not the player has been accepted by the room owner.
-		 *
-		 * @return true if yes, false otherwise.
-		 */
-		bool isAccepted() const { return m_Accepted; }
+void Protocol::sendTurnOrder(const std::vector<int> &order) {
+	Packet p;
+	p.addByte(GAME_TURN_ORDER);
 
-	private:
-		/// The communications protocol.
-		Protocol *m_Protocol;
+	for (int i=0; i<4; i++)
+		p.addByte(order[i]);
 
-		/// Flags whether the player has been accepted to join by room owner.
-		bool m_Accepted;
-};
-
-#endif
+	p.write(m_Socket);
+}
