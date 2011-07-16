@@ -64,7 +64,7 @@ void* RoomEngine::roomProcess(void *arg) {
 	std::cout << "Owner " << players[0]->getUsername() << " joined the room.\n";
 
 	// tell the owner's client to show the begin/wait dialog
-	Human *owner=static_cast<Human*>(players[0]);
+	Human *owner=dynamic_cast<Human*>(players[0]);
 	owner->getProtocol()->sendPlayerJoined(owner->getUsername(), 0);
 	owner->getProtocol()->sendStartControl();
 
@@ -101,7 +101,7 @@ void* RoomEngine::roomProcess(void *arg) {
 
 			// go over the list of players and check who is not accepted
 			for (int i=1; i<4; i++) {
-				Human *hp=static_cast<Human*>(room->getPlayers()[i]);
+				Human *hp=dynamic_cast<Human*>(room->getPlayers()[i]);
 				if (!hp)
 					continue;
 
@@ -115,7 +115,7 @@ void* RoomEngine::roomProcess(void *arg) {
 
 					// let all the other players know
 					for (int j=0; j<4; j++) {
-						Human *op=static_cast<Human*>(room->getPlayers()[j]);
+						Human *op=dynamic_cast<Human*>(room->getPlayers()[j]);
 						if (op)
 							op->getProtocol()->sendPlayerQuit(index);
 					}
@@ -137,7 +137,7 @@ void* RoomEngine::roomProcess(void *arg) {
 							hp->getProtocol()->sendPlayerJoined(pl->getUsername(), j);
 
 							// if this player is not the joined player, tell them that someone joined
-							Human *op=static_cast<Human*>(pl);
+							Human *op=dynamic_cast<Human*>(pl);
 							if (op && op->getUsername()!=hp->getUsername())
 								op->getProtocol()->sendPlayerJoined(hp->getUsername(), index);
 						}
@@ -198,14 +198,14 @@ void* RoomEngine::roomProcess(void *arg) {
 
 	// now disconnect all players
 	for (int i=0; i<4; i++) {
-		Human *hp=static_cast<Human*>(data->room->getPlayers()[i]);
+		Human *hp=dynamic_cast<Human*>(room->getPlayers()[i]);
 		if (hp) {
 			close(hp->getProtocol()->getSocket());
 			delete hp;
 		}
 	}
 
-	std::cout << "Ending room #" << data->room->getGid() << std::endl;
+	std::cout << "Ending room #" << room->getGid() << std::endl;
 
 	g_RoomEngine->closeRoom(room);
 	delete room;
@@ -230,10 +230,12 @@ void RoomEngine::openRoom(Room *room) {
 
 void RoomEngine::closeRoom(Room *room) {
 	lock();
+
+	m_Rooms.erase(room->getGid());
+
 	ThreadData *data=m_Rooms[room->getGid()];
 	delete data;
 
-	m_Rooms.erase(room->getGid());
 	unlock();
 }
 
@@ -270,7 +272,7 @@ bool RoomEngine::addPlayerToRoom(int gid, const std::string &username, int socke
 	// otherwise this player is free to join
 	Human *human=new Human(username, socket);
 	human->setAccepted(false);
-	room->addPlayer(static_cast<Player*>(human));
+	room->addPlayer(dynamic_cast<Player*>(human));
 
 	// see if the owner joined for the first time, and if so, wake the room thread
 	if (room->getOwner()==username) {

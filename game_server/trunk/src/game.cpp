@@ -29,8 +29,15 @@ Game::Game(Room *room) {
 }
 
 void Game::begin() {
+	// assign computer players to empty slots
+	m_Room->assignAI();
+
 	// determine turn order and send it to human players
 	m_Room->randomizeTurnOrder();
+	sleep(5);
+
+	// have every player choose a game token
+	m_Room->tokenSelection();
 
 	// create a polling descriptor for up for 4 client connections
 	int pfd=epoll_create(4);
@@ -40,11 +47,13 @@ void Game::begin() {
 
 	static struct epoll_event e;
 	for (int i=0; i<4; i++) {
-		Human *hp=static_cast<Human*>(m_Room->getPlayers()[i]);
+		Human *hp=dynamic_cast<Human*>(m_Room->getPlayers()[i]);
 
 		if (hp) {
 			e.events=EPOLLIN;
 			e.data.fd=hp->getProtocol()->getSocket();
 		}
 	}
+
+	m_Room->unlock(Room::JoinMutex);
 }

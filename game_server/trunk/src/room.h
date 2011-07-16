@@ -114,9 +114,21 @@ class Room: public Lockable {
 		Room(int gid, const std::string &owner);
 
 		/**
+		 * Assigns computer-controlled players to empty positions.
+		 */
+		void assignAI();
+
+		/**
 		 * Generates a random turn order for all players.
 		 */
 		void randomizeTurnOrder();
+
+		/**
+		 * Asks each player to choose a game token.
+		 * Players choose pieces based on turn order. Computer players will randomly
+		 * choose a token.
+		 */
+		void tokenSelection();
 
 		/**
 		 * Causes the current thread to sleep until someone joins the room.
