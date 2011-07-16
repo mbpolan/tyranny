@@ -27,7 +27,9 @@ HEADERS += src/mainwindow.h \
     src/roomdata.h \
     src/gamewindow.h \
     src/boardview.h \
-    src/gameprotocol.h
+    src/gameprotocol.h \
+    src/tokenchooser.h \
+    src/turndialog.h
 FORMS += src/ui/mainwindow.ui \
     src/ui/prefdialog.ui \
     src/ui/authdialog.ui \
@@ -35,7 +37,10 @@ FORMS += src/ui/mainwindow.ui \
     src/ui/profiledialog.ui \
     src/ui/settingsdialog.ui \
     src/ui/userlistdialog.ui \
-    src/ui/rulesdialog.ui
+    src/ui/rulesdialog.ui \
+    src/ui/tokenchooser.ui \
+    src/ui/turndialog.ui \
+    src/ui/gamewindow.ui
 SOURCES += src/client.cpp src/mainwindow.cpp \
     src/prefdialog.cpp \
     src/iohandler.cpp \
@@ -49,4 +54,6 @@ SOURCES += src/client.cpp src/mainwindow.cpp \
     src/rulesdialog.cpp \
     src/gamewindow.cpp \
     src/boardview.cpp \
-    src/gameprotocol.cpp
+    src/gameprotocol.cpp \
+    src/tokenchooser.cpp \
+    src/turndialog.cpp

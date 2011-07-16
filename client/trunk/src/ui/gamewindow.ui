@@ -30,13 +30,8 @@
           <string>Username</string>
          </property>
         </column>
-        <column>
-         <property name="text">
-          <string>Points</string>
-         </property>
-        </column>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <layout class="QVBoxLayout" name="glLayout">
@@ -90,7 +85,7 @@
         </layout>
        </widget>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <widget class="QTextEdit" name="chatBox">
