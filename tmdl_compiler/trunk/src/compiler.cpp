@@ -140,11 +140,28 @@ void Compiler::start() {
 					emit warning("Generating default object for group set.");
 				}
 
+				g.object=curObject;
 				g.name=comp[1];
+				g.material=-1; // by default a group is not textured
 
 				// flag this as our working group
 				curGroup=m_Groups.size();
 				m_Groups.push_back(g);
+			}
+		}
+
+		// material application line
+		else if (line.contains("usemtl")) {
+			if (comp.size()<2)
+				emit warning("Missing components for usemtl declaration.");
+
+			else if (curGroup==-1)
+				emit warning("Material does not belong to any parent group.");
+
+			else {
+				// this is the NAME of the material we use for this group
+				QString matname=line.mid(7, line.size()-9);
+				m_GroupMaterials[curGroup]=matname;
 			}
 		}
 
@@ -230,6 +247,27 @@ void Compiler::start() {
 		}
 	}
 
+	emit message("Mapping material indices to groups...");
+
+	// now match up group indices to material indices
+	for (QMap<short, QString>::Iterator it=m_GroupMaterials.begin(); it!=m_GroupMaterials.end(); ++it) {
+		// find the material index with the given diffuse texture name
+		int mindex=-1;
+		for (int i=0; i<m_Materials.size(); i++) {
+			if (m_Materials[i].name==it.value())
+				mindex=i;
+		}
+
+		if (mindex>-1) {
+			m_Groups[it.key()].material=mindex;
+
+			emit message(QString("Assigned material \"%1\" to group #%2").arg(it.value()).arg(it.key()));
+		}
+
+		else
+			emit warning(QString("Unable to find group for material \"%1\"").arg(it.value()));
+	}
+
 	// assuming everything was parsed successfully, compile the final model file
 	if (success) {
 		emit message("Beginning write of final model file...");
@@ -237,7 +275,8 @@ void Compiler::start() {
 		if (!writeModelData(emsg))
 			emit error(emsg);
 
-		emit message("Final model successfully compiled");
+		else
+			emit message("Final model successfully compiled");
 	}
 
 	emit completed(QDateTime::currentDateTime());
@@ -274,7 +313,10 @@ bool Compiler::parseMaterialLibrary(const QString &file, QVector<Material> &mate
 
 		// beginning of a material section
 		if (line.contains("newmtl")) {
-			materials.push_back(Material());
+			Material mat;
+			mat.name=comp[1];
+			materials.push_back(mat);
+
 			curMaterial=materials.size()-1;
 		}
 
@@ -384,7 +426,7 @@ bool Compiler::writeModelData(QString &error) {
 		out << (qint32) m.diffuseTexture.size();
 
 		for (int j=0; j<m.diffuseTexture.size(); j++)
-			out << (char) m.diffuseTexture[j].toAscii();
+			out << (quint8) m.diffuseTexture[j].toAscii();
 	}
 
 	// now write the header

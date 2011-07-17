@@ -63,6 +63,7 @@ typedef struct {
 } Object;
 
 typedef struct {
+	QString name;
 	QString diffuseTexture;
 } Material;
 
