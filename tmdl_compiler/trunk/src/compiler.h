@@ -23,6 +23,7 @@
 #define CONVERTER_H
 
 #include <QDateTime>
+#include <QMap>
 #include <QObject>
 
 #include "tmdl.h"
@@ -130,6 +131,9 @@ class Compiler: public QObject {
 
 		/// Collection of model materials.
 		QVector<Material> m_Materials;
+
+		/// Intermediate storage of group indices mapped to material names.
+		QMap<short, QString> m_GroupMaterials;
 };
 
 #endif
