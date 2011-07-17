@@ -10,6 +10,11 @@ INCLUDEPATH += .
 MOC_DIR = moc
 UI_DIR = src/ui
 
+# For windows compilers
+win32 {
+	RC_FILE = compiler.rc
+}
+
 # Input
 HEADERS += src/mainwindow.h \
     src/compiler.h \
