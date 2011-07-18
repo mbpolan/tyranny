@@ -30,7 +30,7 @@
 Model::Model(QObject *parent): QObject(parent) {
 }
 
-bool Model::load(const QString &path) {
+bool Model::load(const QString &path, QStringList &errors) {
 	// create a model loader and try to load the data file
 	ModelLoader io(this);
 	if (io.loadTMDLFile(path)) {
@@ -42,7 +42,7 @@ bool Model::load(const QString &path) {
 			// attempt to load it
 			QImage img, temp;
 			if (!img.load(base))
-				qDebug() << "Unable to load texture image file: " << base;
+				errors << QString("Unable to load texture image file: ")+base;
 
 			glPushAttrib(GL_ENABLE_BIT);
 			glEnable(GL_TEXTURE_2D);
