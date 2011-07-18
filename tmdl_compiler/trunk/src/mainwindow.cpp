@@ -60,11 +60,17 @@ void MainWindow::onInputBrowse() {
 
 void MainWindow::onOutputBrowse() {
 	// present the user with the file dialog
-	QString input=QFileDialog::getOpenFileName(this, tr("Select destination"),
+	QString input=QFileDialog::getSaveFileName(this, tr("Select destination"),
 								 QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
 								 tr("Tyranny Models (*.tmdl)"));
-    if (!input.isNull())
-	    ui->outputEdit->setText(input);
+	if (!input.isNull()) {
+		// append the .tmdl extension if its missing
+		QString ext=input.right(5).toLower();
+		if (ext!=".tmdl")
+			input+=".tmdl";
+
+		ui->outputEdit->setText(input);
+	}
 }
 
 void MainWindow::onCompile() {
