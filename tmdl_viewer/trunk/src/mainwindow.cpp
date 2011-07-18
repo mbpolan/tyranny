@@ -55,13 +55,21 @@ void MainWindow::onOpen() {
 	if (!path.isNull()) {
 		// load the model
 		Model *model=new Model(this);
-		if (!model->load(path)) {
+		QStringList errors;
+		if (!model->load(path, errors)) {
 			QMessageBox::critical(this, tr("Error"), tr("Unable to load model."));
 			delete model;
 		}
 
-		else
+		else {
+			QString list="";
+			for (int i=0; i<errors.size(); i++)
+				list+=errors[i]+'\n';
+			if (!list.isEmpty())
+				QMessageBox::warning(this, tr("Warnings"), QString("The following errors were encountered while loading the model:\n")+list);
+
 			m_Scene->setModel(model);
+		}
 	}
 }
 

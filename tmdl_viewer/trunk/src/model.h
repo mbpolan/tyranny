@@ -48,9 +48,10 @@ class Model: public QObject {
 		 * Loads and initializes data from the given model file.
 		 *
 		 * @param path The path to the file.
+		 * @param errors Will contain a list of non-critical errors that occurred, if any.
 		 * @return true if the model was successfully loaded, false otherwise.
 		 */
-		bool load(const QString &path);
+		bool load(const QString &path, QStringList &errors);
 
 		/**
 		 * Renders the model using the current OpenGL matrix configuration.
