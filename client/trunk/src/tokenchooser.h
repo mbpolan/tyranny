@@ -39,6 +39,29 @@ class TokenChooser: public QDialog {
 		 */
 		TokenChooser(const QVector<QString> &usernames, QWidget *parent=NULL);
 
+		/**
+		 * Toggles the token buttons.
+		 *
+		 * @param enable true to enable, false to disable.
+		 */
+		void setButtonsEnabled(bool enable);
+
+		/**
+		 * Updates the chosen token for the given username.
+		 *
+		 * @param username The username to modify.
+		 * @param piece Piece index [1,6]
+		 */
+		void updateUsername(const QString &username, int piece);
+
+	signals:
+		/// Signal emitted when the user has chosen a piece.
+		void pieceChosen(int piece);
+
+	private slots:
+		/// Handler for disabling the dialog when the user chooses a token.
+		void onTokenChosen(int sender);
+
 	private:
 		Ui::TokenChooser *ui;
 

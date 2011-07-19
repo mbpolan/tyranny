@@ -57,3 +57,6 @@ SOURCES += src/client.cpp src/mainwindow.cpp \
     src/gameprotocol.cpp \
     src/tokenchooser.cpp \
     src/turndialog.cpp
+
+RESOURCES += \
+    resources.qrc

@@ -27,18 +27,6 @@
        </item>
        <item>
         <widget class="QLabel" name="player1Img">
-         <property name="minimumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
          <property name="text">
           <string/>
          </property>
@@ -57,18 +45,6 @@
        </item>
        <item>
         <widget class="QLabel" name="player2Img">
-         <property name="minimumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
          <property name="text">
           <string/>
          </property>
@@ -87,18 +63,6 @@
        </item>
        <item>
         <widget class="QLabel" name="player3Img">
-         <property name="minimumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
          <property name="text">
           <string/>
          </property>
@@ -117,18 +81,6 @@
        </item>
        <item>
         <widget class="QLabel" name="player4Img">
-         <property name="minimumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>50</width>
-           <height>50</height>
-          </size>
-         </property>
          <property name="text">
           <string/>
          </property>
@@ -161,7 +113,7 @@
            </size>
           </property>
           <property name="text">
-           <string>t1</string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -180,7 +132,7 @@
            </size>
           </property>
           <property name="text">
-           <string>t2</string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -199,7 +151,7 @@
            </size>
           </property>
           <property name="text">
-           <string>t3</string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -218,7 +170,7 @@
            </size>
           </property>
           <property name="text">
-           <string>t4</string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -237,7 +189,7 @@
            </size>
           </property>
           <property name="text">
-           <string>t5</string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -256,7 +208,7 @@
            </size>
           </property>
           <property name="text">
-           <string>t6</string>
+           <string/>
           </property>
          </widget>
         </item>

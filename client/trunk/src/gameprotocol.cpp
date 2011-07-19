@@ -58,6 +58,13 @@ void GameProtocol::beginGame() {
 	p.write(m_Socket);
 }
 
+void GameProtocol::chooseToken(int token) {
+	Packet p;
+	p.addByte(GAME_SELECTED_TOK);
+	p.addByte(token);
+	p.write(m_Socket);
+}
+
 void GameProtocol::onConnected() {
 	Packet p;
 	p.addByte(CONN_CLIENT);
@@ -98,7 +105,10 @@ void GameProtocol::parsePacket(Packet &p) {
 		case GAME_PLAYER_JOINED: handlePlayerJoined(p); break;
 		case GAME_PLAYER_QUIT: emit playerQuit(p.byte()); break;
 		case GAME_TURN_ORDER: handleTurnOrder(p); break;
-		case GAME_CHOOSE_TOK: emit tokenSelection(); break;
+		case GAME_CHOOSE_TOK: emit tokenSelectionBegin(); break;
+		case GAME_TURN_TOK: emit tokenSelectionTurn(); break;
+		case GAME_SELECTED_TOK: handlePlayerSelectedToken(p); break;
+		case GAME_DONE_TOK: emit tokenSelectionEnd(); break;
 
 		default: qDebug() << "Unknown packet header: " << header;
 	}
@@ -119,4 +129,11 @@ void GameProtocol::handleTurnOrder(Packet &p) {
 		order[i]=p.byte();
 
 	emit turnOrder(order);
+}
+
+void GameProtocol::handlePlayerSelectedToken(Packet &p) {
+	int player=p.byte();
+	int piece=p.byte();
+
+	emit tokenSelected(player, piece);
 }

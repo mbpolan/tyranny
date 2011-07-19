@@ -19,6 +19,8 @@
  ***************************************************************************/
 // tokenchooser.cpp: implementation of the TokenChooser class.
 
+#include <QSignalMapper>
+
 #include "tokenchooser.h"
 
 #include "ui/ui_tokenchooser.h"
@@ -32,4 +34,70 @@ TokenChooser::TokenChooser(const QVector<QString> &usernames, QWidget *parent): 
 	ui->player2Name->setText(usernames[1]);
 	ui->player3Name->setText(usernames[2]);
 	ui->player4Name->setText(usernames[3]);
+
+	// set images for buttons
+	ui->token1->setIcon(QIcon(":/gfx/piece1"));
+	ui->token1->setIconSize(QSize(80,56));
+
+	ui->token2->setIcon(QIcon(":/gfx/piece2"));
+	ui->token2->setIconSize(QSize(80,56));
+
+	ui->token3->setIcon(QIcon(":/gfx/piece3"));
+	ui->token3->setIconSize(QSize(80,56));
+
+	ui->token4->setIcon(QIcon(":/gfx/piece4"));
+	ui->token4->setIconSize(QSize(80,56));
+
+	ui->token5->setIcon(QIcon(":/gfx/piece5"));
+	ui->token5->setIconSize(QSize(80,56));
+
+	ui->token6->setIcon(QIcon(":/gfx/piece6"));
+	ui->token6->setIconSize(QSize(80,56));
+
+	// map button signals
+	QSignalMapper *mapper=new QSignalMapper(this);
+	mapper->setMapping(ui->token1, 1);
+	mapper->setMapping(ui->token2, 2);
+	mapper->setMapping(ui->token3, 3);
+	mapper->setMapping(ui->token4, 4);
+	mapper->setMapping(ui->token5, 5);
+	mapper->setMapping(ui->token6, 6);
+
+	// connect signals
+	connect(ui->token1, SIGNAL(clicked()), mapper, SLOT(map()));
+	connect(ui->token2, SIGNAL(clicked()), mapper, SLOT(map()));
+	connect(ui->token3, SIGNAL(clicked()), mapper, SLOT(map()));
+	connect(ui->token4, SIGNAL(clicked()), mapper, SLOT(map()));
+	connect(ui->token5, SIGNAL(clicked()), mapper, SLOT(map()));
+	connect(ui->token6, SIGNAL(clicked()), mapper, SLOT(map()));
+	connect(mapper, SIGNAL(mapped(int)), this, SIGNAL(onTokenChosen(int)));
+
+	// by default disable any buttons
+	setButtonsEnabled(false);
+}
+
+void TokenChooser::setButtonsEnabled(bool enable) {
+	ui->groupBox->setEnabled(enable);
+}
+
+void TokenChooser::updateUsername(const QString &username, int piece) {
+	QString img=QString(":/gfx/piece%1").arg(piece);
+
+	if (ui->player1Name->text()==username)
+		ui->player1Img->setPixmap(QPixmap(img));
+
+	else if (ui->player2Name->text()==username)
+		ui->player2Img->setPixmap(QPixmap(img));
+
+	else if (ui->player3Name->text()==username)
+		ui->player3Img->setPixmap(QPixmap(img));
+
+	else if (ui->player4Name->text()==username)
+		ui->player4Img->setPixmap(QPixmap(img));
+}
+
+void TokenChooser::onTokenChosen(int piece) {
+	setButtonsEnabled(false);
+
+	emit pieceChosen(piece);
 }
