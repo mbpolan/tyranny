@@ -46,7 +46,10 @@ GameWindow::GameWindow(int gid, const QString &username, const QString &host, in
 	connect(m_Network, SIGNAL(playerJoined(QString,int)), this, SLOT(onNetPlayerJoined(QString,int)));
 	connect(m_Network, SIGNAL(playerQuit(int)), this, SLOT(onNetPlayerQuit(int)));
 	connect(m_Network, SIGNAL(turnOrder(QVector<int>)), this, SLOT(onNetTurnOrder(QVector<int>)));
-	connect(m_Network, SIGNAL(tokenSelection()), this, SLOT(onNetTokenSelection()));
+	connect(m_Network, SIGNAL(tokenSelectionBegin()), this, SLOT(onNetTokenSelectionBegin()));
+	connect(m_Network, SIGNAL(tokenSelectionEnd()), this, SLOT(onNetTokenSelectionEnd()));
+	connect(m_Network, SIGNAL(tokenSelectionTurn()), this, SLOT(onNetTokenSelectionTurn()));
+	connect(m_Network, SIGNAL(tokenSelected(int,int)), this, SLOT(onNetTokenSelected(int,int)));
 
 	// create supplemental dialogs
 	m_BeginGameMsgBox=new QMessageBox(QMessageBox::Information, tr("Waiting..."),
@@ -108,8 +111,27 @@ void GameWindow::onNetTurnOrder(const QVector<int> &order) {
 	td.exec();
 }
 
-void GameWindow::onNetTokenSelection() {
+void GameWindow::onNetTokenSelectionBegin() {
 	// allocate the token chooser dialog and show it
 	m_TokChooser=new TokenChooser(m_Players, this);
+
+	// connect signals
+	connect(m_TokChooser, SIGNAL(pieceChosen(int)), m_Network, SLOT(chooseToken(int)));
+
 	m_TokChooser->show();
+}
+
+void GameWindow::onNetTokenSelectionEnd() {
+	// hide the dialog
+	m_TokChooser->hide();
+}
+
+void GameWindow::onNetTokenSelectionTurn() {
+	m_TokChooser->setButtonsEnabled(true);
+}
+
+/// Network handler for updating a selected token.
+void GameWindow::onNetTokenSelected(int player, int piece) {
+	// map the player index to username
+	m_TokChooser->updateUsername(m_Players[player], piece);
 }

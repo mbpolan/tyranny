@@ -73,7 +73,16 @@ class GameWindow: public QMainWindow {
 		void onNetPlayerQuit(int index);
 
 		/// Network handler for showing the token selection dialog.
-		void onNetTokenSelection();
+		void onNetTokenSelectionBegin();
+
+		/// Network handler for hiding the token selection dialog.
+		void onNetTokenSelectionEnd();
+
+		/// Network handler for signalling to choose a token.
+		void onNetTokenSelectionTurn();
+
+		/// Network handler for updating a selected token.
+		void onNetTokenSelected(int player, int piece);
 
 	private:
 		Ui::GameWindow *ui;

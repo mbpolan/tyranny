@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/gfx">
+        <file alias="piece1">src/gfx/p1.png</file>
+        <file alias="piece2">src/gfx/p2.png</file>
+        <file alias="piece3">src/gfx/p3.png</file>
+        <file alias="piece4">src/gfx/p4.png</file>
+        <file alias="piece5">src/gfx/p5.png</file>
+        <file alias="piece6">src/gfx/p6.png</file>
+    </qresource>
+</RCC>

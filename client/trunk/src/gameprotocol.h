@@ -61,6 +61,13 @@ class GameProtocol: public QObject {
 		void beginGame();
 
 	public slots:
+		/**
+		 * Sends the game server a selected token ID.
+		 *
+		 * @param token The ID of the token [1,6].
+		 */
+		void chooseToken(int token);
+
 		/// Handler for establishing a connection to server.
 		void onConnected();
 
@@ -96,7 +103,16 @@ class GameProtocol: public QObject {
 		void playerQuit(int index);
 
 		/// Signal emitted when token selection is to begin.
-		void tokenSelection();
+		void tokenSelectionBegin();
+
+		/// Signal emitted when it is our turn to choose a token.
+		void tokenSelectionTurn();
+
+		/// Signal emitted when token selection is over.
+		void tokenSelectionEnd();
+
+		/// Signal emitted when another player has chosen a token.
+		void tokenSelected(int player, int piece);
 
 	private:
 		/// Handles parsing an incoming packet.
@@ -107,6 +123,9 @@ class GameProtocol: public QObject {
 
 		/// Handles parsing a packet containing turn order data.
 		void handleTurnOrder(Packet &p);
+
+		/// Handles parsing a packet containing data about a player who chose a token.
+		void handlePlayerSelectedToken(Packet &p);
 
 		/// The socket this protocol communicates with.
 		QTcpSocket *m_Socket;
