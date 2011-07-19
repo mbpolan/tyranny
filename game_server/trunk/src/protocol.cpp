@@ -58,12 +58,28 @@ void Protocol::sendTurnOrder(const std::vector<int> &order) {
 	p.write(m_Socket);
 }
 
+void Protocol::sendTokenSelected(int index, int piece) {
+	Packet p;
+	p.addByte(GAME_SELECTED_TOK);
+	p.addByte(index);
+	p.addByte(piece);
+	p.write(m_Socket);
+}
+
 void Protocol::notify(const Protocol::Notification &note) {
 	Packet p;
 
 	// token choosing is to begin
-	if (note==Protocol::ChooseToken)
+	if (note==Protocol::TokenSelectionBegin)
 		p.addByte(GAME_CHOOSE_TOK);
+
+	// it's the client's turn to choose a token
+	else if (note==Protocol::ChooseToken)
+		p.addByte(GAME_TURN_TOK);
+
+	// token choosing is over
+	else if (note==Protocol::TokenSelectionEnd)
+		p.addByte(GAME_DONE_TOK);
 
 	p.write(m_Socket);
 }
