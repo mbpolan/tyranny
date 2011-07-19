@@ -27,7 +27,7 @@
 class Protocol {
 	public:
 		/// Various notifications sent to players.
-		enum Notification { ChooseToken };
+		enum Notification { TokenSelectionBegin, TokenSelectionEnd, ChooseToken };
 
 	public:
 		/**
@@ -80,6 +80,14 @@ class Protocol {
 		 * @param order A vector of turn orders.
 		 */
 		void sendTurnOrder(const std::vector<int> &order);
+
+		/**
+		 * Tells the client that the player with the given index has chosen a token.
+		 *
+		 * @param index The index of the player in question.
+		 * @param piece The index of the chosen piece [1,6].
+		 */
+		void sendTokenSelected(int index, int piece);
 
 		/**
 		 * Sends the client a notification about an event.

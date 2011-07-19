@@ -24,6 +24,8 @@
 
 #include "aiplayer.h"
 #include "human.h"
+#include "packet.h"
+#include "protspec.h"
 #include "room.h"
 #include "utilities.h"
 
@@ -73,10 +75,10 @@ void Room::randomizeTurnOrder() {
 	Lockable::lock();
 
 	// TODO: make this actually random
-	m_TurnOrder[0]=1;
+	m_TurnOrder[0]=0;
 	m_TurnOrder[1]=3;
 	m_TurnOrder[2]=2;
-	m_TurnOrder[3]=0;
+	m_TurnOrder[3]=1;
 
 	// inform all human players
 	for (int i=0; i<4; i++) {
@@ -88,6 +90,7 @@ void Room::randomizeTurnOrder() {
 	Lockable::unlock();
 }
 
+// FIXME: this method really needs to be optimized...
 void Room::tokenSelection() {
 	Lockable::lock();
 
@@ -95,15 +98,93 @@ void Room::tokenSelection() {
 	for (int i=0; i<4; i++) {
 		Human *hp=dynamic_cast<Human*>(m_Players[i]);
 		if (hp)
-			hp->getProtocol()->notify(Protocol::ChooseToken);
+			hp->getProtocol()->notify(Protocol::TokenSelectionBegin);
 	}
+
+	// used pieces
+	std::vector<int> chosen;
 
 	// now iterate over all players in order and have them choose a piece
 	for (int i=0; i<4; i++) {
-		Human *hp=dynamic_cast<Human*>(m_Players[m_TurnOrder[i]]);
-		if (hp) {
+		Player *p=m_Players[m_TurnOrder[i]];
 
+		// cast the player object
+		AIPlayer *ai=dynamic_cast<AIPlayer*>(p);
+		Human *hp=dynamic_cast<Human*>(p);
+
+		// computer players just choose the next available piece
+		int index=1;
+		if (ai) {
+			// don't overload clients with a barrage of packets
+			sleep(2);
+
+			for (int j=0; j<chosen.size(); j++) {
+				if (chosen[j]==index) {
+					index++;
+					j=0;
+
+					continue;
+				}
+			}
+
+			std::cout << ai->getUsername() << " selected " << index << std::endl;
 		}
+
+		// human players need to choose the available ones
+		else if (hp) {
+			std::cout << "Letting " << hp->getUsername() << " know to choose a token\n";
+
+			// tell the client to choose a token
+			hp->getProtocol()->notify(Protocol::ChooseToken);
+
+			// wait a maximum of 10 seconds for a reply
+			Packet r;
+			Packet::Result res=r.timedRead(hp->getProtocol()->getSocket(), 10, 0);
+			if (res==Packet::NoError && r.byte()==GAME_SELECTED_TOK) {
+				// we got a reply... assign him this piece
+				index=r.byte();
+			}
+
+			// if we timed out, choose the next available piece
+			else if (res==Packet::TimedOut) {
+				// FIXME: great example of redundant code
+				for (int j=0; j<chosen.size(); j++) {
+					if (chosen[j]==index) {
+						index++;
+						j=0;
+
+						continue;
+					}
+				}
+			}
+
+			// the client must have disconnected, replace him with a computer player
+			else {
+				// TODO
+			}
+
+			std::cout << hp->getUsername() << " selected " << index << std::endl;
+		}
+
+		// mark this piece as chosen
+		chosen.push_back(index);
+
+		// inform the other clients of this selection
+		for (int j=0; j<4; j++) {
+			Human *other=dynamic_cast<Human*>(m_Players[j]);
+			if (other)
+				other->getProtocol()->sendTokenSelected(i, index);
+		}
+	}
+
+	// pause for a moment
+	sleep(2);
+
+	// inform all humans that token selection is over
+	for (int i=0; i<4; i++) {
+		Human *hp=dynamic_cast<Human*>(m_Players[i]);
+		if (hp)
+			hp->getProtocol()->notify(Protocol::TokenSelectionEnd);
 	}
 
 	Lockable::unlock();
