@@ -23,9 +23,13 @@
 #define ROOM_H
 
 #include <iostream>
+#include <map>
+#include <queue>
 #include <vector>
 
+#include "fdbuffer.h"
 #include "lockable.h"
+#include "human.h"
 #include "player.h"
 
 /**
@@ -101,8 +105,8 @@ class Room: public Lockable {
 		};
 
 	public:
-		/// Various mutexes that keep this object thread-safe.
-		enum Lock { JoinMutex };
+		/// Phases in the room's lifespan.
+		enum Phase { Init=0, AwaitOwner, AwaitMorePlayers, FindTurnOrder, TokenSelection, Terminating };
 
 	public:
 		/**
@@ -112,50 +116,6 @@ class Room: public Lockable {
 		 * @param The room owner.
 		 */
 		Room(int gid, const std::string &owner);
-
-		/**
-		 * Assigns computer-controlled players to empty positions.
-		 */
-		void assignAI();
-
-		/**
-		 * Generates a random turn order for all players.
-		 */
-		void randomizeTurnOrder();
-
-		/**
-		 * Asks each player to choose a game token.
-		 * Players choose pieces based on turn order. Computer players will randomly
-		 * choose a token.
-		 */
-		void tokenSelection();
-
-		/**
-		 * Causes the current thread to sleep until someone joins the room.
-		 * After this method returns, the JoinMutex mutex will be locked -- be sure
-		 * to unlock it when you're done to avoid deadlocks!
-		 */
-		void waitOnJoin();
-
-		/**
-		 * Causes the current thread to awake when waiting for players to join.
-		 * Note that the aforementioned JoinMutex mutex will now be locked.
-		 */
-		void awakeOnJoin();
-
-		/**
-		 * Locks the defined room mutex.
-		 *
-		 * @param lock Which mutex to lock.
-		 */
-		void lock(const Room::Lock &lock);
-
-		/**
-		 * Unlocks the defined room mutex.
-		 *
-		 * @param lock Which mutex to unlock.
-		 */
-		void unlock(const Room::Lock &lock);
 
 		/**
 		 * Sets the rules for this room.
@@ -172,6 +132,20 @@ class Room: public Lockable {
 		Rules getRules();
 
 		/**
+		 * Sets this room's current phase.
+		 *
+		 * @param phase The phase this room is now in.
+		 */
+		void setPhase(const Phase &phase);
+
+		/**
+		 * Returns this room's current phase.
+		 *
+		 * @return This room's current phase.
+		 */
+		Phase getPhase();
+
+		/**
 		 * Returns the room's id number.
 		 *
 		 * @return The id number of the room.
@@ -186,46 +160,110 @@ class Room: public Lockable {
 		std::string getOwner() const { return m_Owner; }
 
 		/**
-		 * Finds the index for the given username.
+		 * Determines if a new player can join this room.
 		 *
-		 * @return The player's index, or -1 if no such player is in the room.
+		 * @param result This gets set to a result message if the return value is false.
+		 * @return true if yes, false if no.
 		 */
-		int getPlayerIndex(const std::string &username);
+		bool allowNewPlayers(std::string &result);
 
 		/**
-		 * Adds a player to the game room.
+		 * Adds the owner as a joined player.
+		 * Call this method only once: when the room is awaiting an owner, a call
+		 * to this method flags the game to "begin." Subsequent calls may corrupt
+		 * the state of the room (to be fixed in the future).
+		 *
+		 * @param player The owner player object.
+		 */
+		void addOwner(Player *player);
+
+		/**
+		 * Adds a given player to the internal room queue.
+		 * When the room cycles, it will add the player to the game.
 		 *
 		 * @param player The player to add.
 		 */
-		void addPlayer(Player *player);
+		void queuePlayer(Player *player);
 
 		/**
-		 * Removes a player from the game room.
-		 *
-		 * @param player The player to remove.
-		 * @return The index the player was previously assigned.
+		 * Starts the procedure to play the game in the room.
 		 */
-		int removePlayer(const Player *player);
-
-		/**
-		 * Returns a list of players in this room.
-		 * Do not try to check the amount of players in the room by calling the vector's
-		 * size() method. The vector is preallocated to have space for four (4) pointers,
-		 * so this will always lead to unexpected results in code. Use the getNumPlayers()
-		 * method instead.
-		 *
-		 * @return A vector of usernames.
-		 */
-		std::vector<Player*> getPlayers();
-
-		/**
-		 * Returns the amount of human players (accepted and not accepted) in this room.
-		 *
-		 * @return The number of human players.
-		 */
-		int getNumPlayers();
+		void begin();
 
 	private:
+		/**
+		 * Removes a given player from the room.
+		 * This method also notifies all clients of the disconnected player,
+		 * be it a computer or another human player. If so requested, the
+		 * player can be replaced by a computer controlled one.
+		 *
+		 * @param player The player to remove.
+		 * @param replace true to replace with a computer player, false otherwise.
+		 */
+		void removePlayer(Player *player, bool replace);
+
+		/**
+		 * Maps a vector of socket file descriptors to the human players who
+		 * are connected through them.
+		 *
+		 * @param fds A vector of file descriptors.
+		 * @return A translated vector of matching players.
+		 */
+		std::vector<Human*> mapToPlayers(const std::vector<int> &fds);
+
+		/**
+		 * Alerts all connected clients that a player (computer or human) has joined
+		 * the game room.
+		 *
+		 * @param player The player who joined.
+		 * @param index The joining player's assigned index.
+		 */
+		void broadcastPlayerJoined(Player *player, int index);
+
+		/**
+		 * Alerts all clients of the chosen turn order.
+		 */
+		void broadcastTurnOrder();
+
+		/**
+		 * Sends all clients the given protocol notification.
+		 *
+		 * @param note The notification to send.
+		 */
+		void broadcastNotification(const Protocol::Notification &note);
+
+		/**
+		 * Alerts all clients that the given player has chosen a token.
+		 *
+		 * @param player Index of the player who chosen the token.
+		 * @param piece The index of the token (range is [0,5]).
+		 */
+		void broadcastTokenChosen(int player, int piece);
+
+		/// Assigns computer players to empty slots.
+		void assignAI();
+
+		/// Removes any disconnected or dead clients.
+		void handleDisconnectedPlayers();
+
+		/// Tries to add waiting players to the game room player list.
+		void handleQueuedPlayers();
+
+		/**
+		 * Handles general player actions during the pre-game phase.
+		 */
+		void handleAwaitMorePlayers(const FDBuffer::WaitCode &fdc);
+
+		/**
+		 * Handles assigning turn orders to players.
+		 */
+		void handleFindTurnOrder(const FDBuffer::WaitCode &fdc);
+
+		/**
+		 * Handles dealing with the token selection process.
+		 */
+		void handleTokenSelection(const FDBuffer::WaitCode &fdc);
+
 		/// The id number of the room.
 		int m_Gid;
 
@@ -235,17 +273,45 @@ class Room: public Lockable {
 		/// The rules of this room.
 		Rules m_Rules;
 
-		/// List of players in the room.
-		std::vector<Player*> m_Players;
+		/// The current room phase.
+		Phase m_Phase;
 
-		/// Indicies into the m_Players vector, based on turn order.
+		/// The number of human players.
+		int m_NumHumans;
+
+		/// Marker for the current player who has control.
+		int m_CurPlayer;
+
+		/**
+		 * Predetermined turn order for players.
+		 * The indices of the vector map into the m_Players vector,
+		 * in such a manner:
+		 *
+		 * m_TurnOrder[0] -> 1 (player 2 goes first)
+		 * m_TurnOrder[1] -> 0 (player 1 goes second)
+		 * m_TurnOrder[2] -> 3 (player 4 goes third)
+		 * m_TurnOrder[3] -> 2 (player 3 goes last)
+		 */
 		std::vector<int> m_TurnOrder;
 
-		/// Mutex that locks the thread when a player is joining.
-		pthread_mutex_t m_JoinMutex;
+		/**
+		 * Vector of chosen pieces for players.
+		 * Each index into the vector maps into the m_Players vector. The
+		 * range is [0,5].
+		 */
+		std::vector<int> m_ChosenPieces;
 
-		/// Condition variable for the ownerJoinMutex object.
-		pthread_cond_t m_OwnerJoinCond;
+		/// The players (both human and computer) in this room.
+		std::vector<Player*> m_Players;
+
+		/// Players waiting to be added to the game.
+		std::queue<Player*> m_Queued;
+
+		/// Temporary vector for active player sockets.
+		std::vector<Human*> m_ActiveSockets;
+
+		/// A controller for connected clients.
+		FDBuffer m_FDBuffer;
 };
 
 #endif

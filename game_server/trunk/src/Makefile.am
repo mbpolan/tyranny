@@ -3,7 +3,7 @@ tyranny_game_server_SOURCES = \
 	aiplayer.cpp aiplayer.h \
 	clientsocket.cpp clientsocket.h \
 	configfile.cpp configfile.h \
-	game.cpp game.h \
+	fdbuffer.cpp fdbuffer.h \
 	gameserver.cpp gameserver.h \
 	human.cpp human.h \
 	packet.cpp packet.h \
@@ -13,6 +13,7 @@ tyranny_game_server_SOURCES = \
 	room.cpp room.h \
 	roomengine.cpp roomengine.h \
 	serversocket.cpp serversocket.h \
+	thread.h \
 	utilities.cpp utilities.h 
 
 AM_CPPFLAGS = $(all_includes) -I/usr/include/libxml2 `mysql_config --cflags`

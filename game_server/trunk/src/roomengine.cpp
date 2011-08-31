@@ -25,10 +25,10 @@
 #include "configfile.h"
 #include "clientsocket.h"
 #include "human.h"
-#include "game.h"
 #include "packet.h"
 #include "protspec.h"
 #include "roomengine.h"
+#include "thread.h"
 
 RoomEngine *g_RoomEngine=NULL;
 
@@ -42,141 +42,27 @@ RoomEngine* RoomEngine::instance() {
 
 void* RoomEngine::roomProcess(void *arg) {
 	ThreadData *data=(ThreadData*) arg;
-	Room *room=data->room;
 
-	std::cout << "Waiting for owner on room #" << room->getGid() << std::endl;
+	std::cout << "New thread started...\n";
 
-	// we now wait for the room owner to join
-	room->waitOnJoin();
+	// now wait on the owner for up to 5 minutes
+	Thread::lock(&data->ownerJoinMutex);
+	data->room->setPhase(Room::AwaitOwner);
 
-	// see if anyone joined
-	std::vector<Player*> players=room->getPlayers();
-	if (players.empty() || players[0]->getUsername()!=room->getOwner()) {
-		std::cout << "Owner did not join and thread timed out.\n";
+	Thread::sleep(&data->ownerJoinCV, &data->ownerJoinMutex, 7);
 
-		if (!players.empty())
-			std::cout << "Joinee: " << players[0]->getUsername() << ", owner: " << data->room->getOwner() << std::endl;
-
-		room->unlock(Room::JoinMutex);
-		pthread_exit(0);
+	// determine if the owner joined or not
+	bool begin=false;
+	if (data->owner) {
+		data->room->addOwner(data->owner);
+		begin=true;
 	}
 
-	std::cout << "Owner " << players[0]->getUsername() << " joined the room.\n";
+	Thread::unlock(&data->ownerJoinMutex);
 
-	// tell the owner's client to show the begin/wait dialog
-	Human *owner=dynamic_cast<Human*>(players[0]);
-	owner->getProtocol()->sendPlayerJoined(owner->getUsername(), 0);
-	owner->getProtocol()->sendStartControl();
-
-	// set a time out of 5 seconds on the owner socket
-	int osock=owner->getProtocol()->getSocket();
-
-	struct timespec ts;
-	ts.tv_sec=5;
-	ts.tv_nsec=0;
-	if (setsockopt(osock, SOL_SOCKET, SO_RCVTIMEO, (char*) &ts, sizeof(ts))<0) {
-		std::cout << "Failed to set timeout on owner socket.\n";
-	}
-
-	room->unlock(Room::JoinMutex);
-
-	// wait for the owner to reply
-	Packet r;
-	bool terminate=false;
-	while(1) {
-		Packet::Result result=r.read(osock);
-
-		// if the owner disconnected, destroy the room
-		if (result==Packet::Disconnected || result==Packet::DataCorrupt) {
-			std::cout << "Owner connection terminated\n";
-			terminate=true;
-			break;
-		}
-
-		// otherwise if the read timed out, check for new players
-		else if (result==Packet::TimedOut) {
-			room->lock(Room::JoinMutex);
-
-			std::cout << "Checking for new players...\n";
-
-			// go over the list of players and check who is not accepted
-			for (int i=1; i<4; i++) {
-				Human *hp=dynamic_cast<Human*>(room->getPlayers()[i]);
-				if (!hp)
-					continue;
-
-				// first see if this player is still connected
-				Packet test;
-				Packet::Result alive=test.timedRead(hp->getProtocol()->getSocket(), 1, 0);
-				if (alive==Packet::Disconnected) {
-					// remove him from the players
-					std::cout << hp->getUsername() << " disconnected.\n";
-					int index=room->removePlayer(hp);
-
-					// let all the other players know
-					for (int j=0; j<4; j++) {
-						Human *op=dynamic_cast<Human*>(room->getPlayers()[j]);
-						if (op)
-							op->getProtocol()->sendPlayerQuit(index);
-					}
-
-					delete hp;
-				}
-
-				// accept this player if the owner agrees
-				else if (!hp->isAccepted()) {
-					std::cout << hp->getUsername() << " joined the room!\n";
-					hp->setAccepted(true);
-
-					int index=room->getPlayerIndex(hp->getUsername());
-
-					// let all the other players know, and update the joined player
-					for (int j=0; j<4; j++) {
-						Player *pl=room->getPlayers()[j];
-						if (pl) {
-							hp->getProtocol()->sendPlayerJoined(pl->getUsername(), j);
-
-							// if this player is not the joined player, tell them that someone joined
-							Human *op=dynamic_cast<Human*>(pl);
-							if (op && op->getUsername()!=hp->getUsername())
-								op->getProtocol()->sendPlayerJoined(hp->getUsername(), index);
-						}
-					}
-				}
-			}
-
-			room->unlock(Room::JoinMutex);
-		}
-
-		// otherwise the owner sent a packet
-		else {
-			uint8_t header=r.byte();
-
-			// see if this is the reply we are waiting for
-			if (header==GMRM_BEGIN_GAME) {
-				std::cout << "Owner flagged game to begin\n";
-				break;
-			}
-		}
-	}
-
-	// see if we should begin the game
-	if (!terminate) {
-		// remove any timeouts we set on the owner socket
-		ts.tv_sec=0;
-		ts.tv_nsec=0;
-		if (setsockopt(osock, SOL_SOCKET, SO_RCVTIMEO, (char*) &ts, sizeof(ts))<0) {
-			std::cout << "Failed to clear timeout on owner socket.\n";
-		}
-
-		std::cout << "Beginning new round\n";
-
-		// create a new game handler for this room and start it up
-		Game game(data->room);
-		game.begin();
-
-		sleep(10);
-	}
+	// start the game room now
+	if (begin)
+		data->room->begin();
 
 	// tell the lobby server that this room is closing
 	try {
@@ -196,19 +82,7 @@ void* RoomEngine::roomProcess(void *arg) {
 		std::cout << "ClientSocket Error: " << ex.getMessage() << std::endl;
 	}
 
-	// now disconnect all players
-	for (int i=0; i<4; i++) {
-		Human *hp=dynamic_cast<Human*>(room->getPlayers()[i]);
-		if (hp) {
-			close(hp->getProtocol()->getSocket());
-			delete hp;
-		}
-	}
-
-	std::cout << "Ending room #" << room->getGid() << std::endl;
-
-	g_RoomEngine->closeRoom(room);
-	delete room;
+	std::cout << "Terminating game room " << data->room->getGid() << std::endl;
 
 	pthread_exit(0);
 }
@@ -249,47 +123,49 @@ bool RoomEngine::addPlayerToRoom(int gid, const std::string &username, int socke
 		return false;
 	}
 
-	Room *room=m_Rooms[gid]->room;
+	ThreadData *data=m_Rooms[gid];
+	Thread::lock(&data->ownerJoinMutex);
 
-	// if the room is empty, the owner must join first
-	if (room->getNumPlayers()==0 && room->getOwner()!=username) {
-		unlock();
-		error="Owner must join this room first.";
-		return false;
+	Room *room=data->room;
+
+	// create a new human object
+	Human *hp=new Human(username, socket);
+
+	// if the room is awaiting its owner, join the player if he is in fact that owner
+	if (room->getPhase()==Room::AwaitOwner) {
+		if (username==room->getOwner()) {
+			// also wake the room process thread
+			data->owner=hp;
+			Thread::signal(&data->ownerJoinCV);
+		}
+
+		else {
+			error="This is not the room owner";
+			Thread::unlock(&data->ownerJoinMutex);
+			unlock();
+
+			return false;
+		}
 	}
 
-	// make sure the room is not full already
-	if (room->getNumPlayers()==room->getRules().getMaxHumans()) {
-		unlock();
-		error="This room is already full.";
-		return false;
-	}
+	// other phases when the player could join
+	else
+		room->queuePlayer(hp);
 
-	m_Rooms[gid]->room->lock(Room::JoinMutex);
-
-	std::cout << "Preparing new human player object...\n";
-
-	// otherwise this player is free to join
-	Human *human=new Human(username, socket);
-	human->setAccepted(false);
-	room->addPlayer(dynamic_cast<Player*>(human));
-
-	// see if the owner joined for the first time, and if so, wake the room thread
-	if (room->getOwner()==username) {
-		std::cout << "Awaking on owner join condition. ";
-		m_Rooms[gid]->room->awakeOnJoin();
-	}
-
-	m_Rooms[gid]->room->unlock(Room::JoinMutex);
+	Thread::unlock(&data->ownerJoinMutex);
 
 	unlock();
-
 	return true;
 }
 
 RoomEngine::ThreadData::ThreadData(Room *room) {
 	this->room=room;
+	Thread::createCondVar(&ownerJoinCV);
+	Thread::createMutex(&ownerJoinMutex);
+	owner=NULL;
 }
 
 RoomEngine::ThreadData::~ThreadData() {
+	Thread::destroyCondVar(&ownerJoinCV);
+	Thread::destroyMutex(&ownerJoinMutex);
 }
