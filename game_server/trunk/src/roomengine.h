@@ -25,6 +25,7 @@
 #include <iostream>
 #include <map>
 
+#include "human.h"
 #include "lockable.h"
 #include "room.h"
 
@@ -101,8 +102,17 @@ class RoomEngine: public Lockable {
 				/// Thread handle.
 				pthread_t thread;
 
+				/// Conditional variable used to wait for the room owner to join.
+				pthread_cond_t ownerJoinCV;
+
+				/// Associated mutex with the ownerJoinCV conditional variable.
+				pthread_mutex_t ownerJoinMutex;
+
 				/// Room managed by this thread.
 				Room *room;
+
+				/// Temporary holding pointer for the room owner.
+				Human *owner;
 		};
 
 	private:

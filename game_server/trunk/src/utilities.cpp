@@ -27,3 +27,47 @@
 int Util::randomInt(int low, int high) {
 	return (low+int((high-low+1)*rand()/RAND_MAX+1.0));
 }
+
+std::vector<int> Util::generateTurnOrder() {
+	// an array of possible turn orders
+	int options[][4]={
+			{ 0, 1, 2, 3 },
+			{ 0, 2, 1, 3 },
+			{ 0, 1, 3, 2 },
+			{ 0, 3, 2, 1 },
+			{ 0, 2, 3, 1 },
+			{ 0, 3, 1, 2 },
+
+			{ 1, 0, 2, 3 },
+			{ 1, 0, 3, 2 },
+			{ 1, 3, 0, 2 },
+			{ 1, 2, 0, 3 },
+			{ 1, 3, 2, 0 },
+			{ 1, 2, 3, 0 },
+
+			{ 2, 0, 1, 3 },
+			{ 2, 0, 3, 1 },
+			{ 2, 1, 0, 3 },
+			{ 2, 1, 3, 0 },
+			{ 2, 3, 0, 1 },
+			{ 2, 3, 1, 0 },
+
+			{ 3, 0, 1, 2 },
+			{ 3, 0, 2, 1 },
+			{ 3, 1, 0, 2 },
+			{ 3, 1, 2, 0 },
+			{ 3, 2, 0, 1 },
+			{ 3, 2, 1, 2 }
+	};
+
+	// draw a random number and choose one of the arrays
+	int draw=randomInt(0, 23);
+
+	std::vector<int> orders=std::vector<int>(4);
+	orders[0]=options[draw][0];
+	orders[1]=options[draw][1];
+	orders[2]=options[draw][2];
+	orders[3]=options[draw][3];
+
+	return orders;
+}

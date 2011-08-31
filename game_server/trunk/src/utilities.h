@@ -22,6 +22,8 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include <vector>
+
 namespace Util {
 
 /**
@@ -31,6 +33,13 @@ namespace Util {
  * @param high The upper bound.
  */
 int randomInt(int low, int high);
+
+/**
+ * Generates a random turn order for four players.
+ *
+ * @return A vector of player indices, in turn order.
+ */
+std::vector<int> generateTurnOrder();
 
 }
 
